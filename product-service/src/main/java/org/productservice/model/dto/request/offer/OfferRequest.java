@@ -1,0 +1,30 @@
+package org.productservice.model.dto.request.offer;
+
+
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+
+import java.util.Date;
+import java.util.Map;
+
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+public class OfferRequest {
+       Long id;
+       @Size(min = 2, max = 50)
+       String name;
+       @Size(min = 0, max = 50)
+       String shortDescription;
+       @Size(min = 0, max = 1000)
+       String longDescription;
+       Long lotId;
+       Double price;
+       Map<String, Object> attributes;
+
+
+}
