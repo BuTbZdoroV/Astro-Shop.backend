@@ -26,44 +26,42 @@ public class LotService {
     private final ProductRepository productRepository;
 
     @Transactional
-    public ResponseEntity<?> createLot(LotRequest request) {
+    public ResponseEntity<?> create(LotRequest request) {
         if (request == null) {
             logger.warn("Request is null");
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid request");
         }
         if (request.getProductId() == null) {
-            logger.error("Product id is null");
+            logger.warn("Product id is null");
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Product id is null");
         }
 
-        try {
-            Product product = productRepository.findById(request.getProductId()).orElseThrow(() ->
-                    new ResponseStatusException(HttpStatus.NOT_FOUND, "Product not found with id: " + request.getProductId()));
-
-
-            Lot lot = Lot.builder()
-                    .name(request.getName())
-                    .product(product)
-                    .build();
-
-            product.getLots().add(lot);
-            lotRepository.save(lot);
-
-            Lot savedLot = lotRepository.save(lot);
-
-            LotResponse lotResponse = LotResponse.builder()
-                    .id(savedLot.getId())
-                    .name(savedLot.getName())
-                    .attributes(new HashMap<>())
-                    .build();
-
-            logger.info("Created lot with id: {}", savedLot.getId());
-            return ResponseEntity.status(HttpStatus.CREATED).body(lotResponse);
-        } catch (Exception e) {
-            logger.error(e.getMessage());
-            return new ResponseEntity<>(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+        if (request.getName() == null || request.getName().isEmpty()) {
+            logger.warn("Lot name is null");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Lot name is null");
         }
+
+        Product product = productRepository.findById(request.getProductId()).orElseThrow(() ->
+                new ResponseStatusException(HttpStatus.NOT_FOUND, "Product not found with id: " + request.getProductId()));
+
+        Lot lot = Lot.builder()
+                .name(request.getName())
+                .product(product)
+                .build();
+
+        product.getLots().add(lot);
+        lotRepository.save(lot);
+
+        Lot savedLot = lotRepository.save(lot);
+
+        LotResponse lotResponse = LotResponse.builder()
+                .id(savedLot.getId())
+                .name(savedLot.getName())
+                .attributes(new HashMap<>())
+                .build();
+
+
+        logger.info("Created lot with id: {}", savedLot.getId());
+        return ResponseEntity.status(HttpStatus.CREATED).body(lotResponse);
     }
-
-
 }

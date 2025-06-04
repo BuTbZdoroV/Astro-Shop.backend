@@ -12,7 +12,6 @@ import org.springframework.security.oauth2.core.OAuth2ErrorCodes;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
-import org.springframework.web.reactive.function.client.WebClient;
 import org.userservice.model.authinfo.OAuthUserInfo;
 import org.userservice.model.authinfo.OAuthUserInfoFactory;
 import org.userservice.model.authinfo.UserPrincipal;
@@ -29,7 +28,6 @@ public class GoogleOAuthUserService extends DefaultOAuth2UserService {
     private final Logger logger = LoggerFactory.getLogger(GoogleOAuthUserService.class);
 
     private final UserRepository userRepository;
-    private final WebClient.Builder webClient;
 
     @Override
     public OAuth2User loadUser(OAuth2UserRequest userRequest) throws OAuth2AuthenticationException {
@@ -113,17 +111,6 @@ public class GoogleOAuthUserService extends DefaultOAuth2UserService {
                 .category(ProductRequest.Category.GAMES)
                 .price(999999.9)
                 .build();
-
-        webClient.build()
-                .post()
-                .uri("http://product-service/products/addProduct") // Или через Eureka: "http://product-service/products/addProduct"
-                .bodyValue(productRequest)
-                .retrieve()
-                .toBodilessEntity()
-                .subscribe(
-                        response -> logger.info("Product added for user {}", userId),
-                        error -> logger.error("Failed to add product: {}", error.getMessage())
-                );
     }
 
     @Override

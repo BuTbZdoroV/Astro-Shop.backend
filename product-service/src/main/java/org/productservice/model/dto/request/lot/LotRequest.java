@@ -9,8 +9,6 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class LotRequest {
-    @NotBlank
     String name;
-
     Long productId;
 }

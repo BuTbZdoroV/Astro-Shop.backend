@@ -13,13 +13,13 @@ import org.springframework.web.bind.annotation.RestController;
 
 @Tag(name = "Product Management", description = "API для управления товарами")
 @RestController
-@RequestMapping("/product")
+@RequestMapping("/products")
 @RequiredArgsConstructor
 public final class ProductController {
     private final ProductService productService;
 
-    @PostMapping("/addProduct")
-    public ResponseEntity<?> addProduct(@RequestBody @Valid ProductRequest request) {
-        return productService.addProduct(request);
+    @PostMapping("/create")
+    public ResponseEntity<?> create(@RequestBody ProductRequest request) {
+        return productService.create(request);
     }
 }

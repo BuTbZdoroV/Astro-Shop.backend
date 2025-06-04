@@ -1,11 +1,11 @@
-# Этап сборки (Gradle)
-FROM gradle:8.4-jdk17 AS builder
-WORKDIR /app
-COPY . .
-RUN gradle build --no-daemon
+FROM postgres:16
 
-# Финальный образ (только JAR + JRE)
-FROM eclipse-temurin:17-jre-jammy
-WORKDIR /app
-COPY --from=builder /app/build/libs/*.jar eureka-server-0.0.1-SNAPSHOT.jar
-ENTRYPOINT ["java", "-jar", "eureka-server-0.0.1-SNAPSHOT.jar"]
+# Устанавливаем pg_cron
+RUN apt-get update && apt-get install -y postgresql-16-cron \
+    && rm -rf /var/lib/apt/lists/*
+
+# Добавляем pg_cron в shared_preload_libraries
+RUN echo "shared_preload_libraries = 'pg_cron'" >> /docker-entrypoint-initdb.d/pg_cron.conf
+
+# Создаем базу и расширение при запуске
+CMD ["postgres"]

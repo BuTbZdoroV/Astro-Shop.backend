@@ -1,8 +1,8 @@
 package org.productservice.service;
 
 import lombok.RequiredArgsConstructor;
-import org.productservice.model.dto.request.offer.OfferFilterRequest;
 import org.productservice.model.dto.request.offer.OfferRequest;
+import org.productservice.model.dto.response.lot.LotResponse;
 import org.productservice.model.dto.response.offer.OfferResponse;
 import org.productservice.model.dto.specification.offer.OfferSpecifications;
 import org.productservice.model.entity.Lot;
@@ -24,7 +24,6 @@ import org.springframework.data.domain.Pageable;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -35,48 +34,55 @@ public class OfferService {
     private final LotRepository lotRepository;
 
     @Transactional
-    public ResponseEntity<?> addOffer(OfferRequest offerRequest) {
-        try {
-            Lot lot = lotRepository.findById(offerRequest.getLotId()).orElseThrow(() -> {
-                logger.error("Lot with id {} not found", offerRequest.getLotId());
-                return new ResponseStatusException(HttpStatus.NOT_FOUND, "Lot not found");
-            });
+    public ResponseEntity<?> add(OfferRequest offerRequest) {
+        if (offerRequest == null)
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "OfferRequest is null");
+        if (offerRequest.getName() == null || offerRequest.getName().isEmpty())
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Offer name is null or empty");
+        if (offerRequest.getLotId() == null)
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "OfferRequest lot id is null");
+        if (offerRequest.getPrice() == null)
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "OfferRequest price is null");
 
-            Offer offer = Offer.builder()
-                    .name(offerRequest.getName())
-                    .price(offerRequest.getPrice())
-                    .shortDescription(offerRequest.getShortDescription())
-                    .longDescription(offerRequest.getLongDescription())
-                    .createdAt(new Date())
-                    .lot(lot)
-                    .attributes(offerRequest.getAttributes())
-                    .build();
+        Lot lot = lotRepository.findById(offerRequest.getLotId()).orElseThrow(() -> {
+            logger.error("Lot with id {} not found", offerRequest.getLotId());
+            return new ResponseStatusException(HttpStatus.NOT_FOUND, "Lot not found");
+        });
 
-            lot.getOffers().add(offer);
-            lotRepository.save(lot);
+        Offer offer = Offer.builder()
+                .name(offerRequest.getName())
+                .price(offerRequest.getPrice())
+                .shortDescription(offerRequest.getShortDescription())
+                .longDescription(offerRequest.getLongDescription())
+                .createdAt(new Date())
+                .lot(lot)
+                .availability(offerRequest.getAvailability())
+                .attributes(offerRequest.getAttributes())
+                .build();
 
-            Offer savedOffer = offerRepository.save(offer);
 
-            OfferResponse offerResponse = OfferResponse.builder()
-                    .id(savedOffer.getId())
-                    .name(savedOffer.getName())
-                    .createdAt(offer.getCreatedAt())
-                    .price(offer.getPrice())
-                    .shortDescription(offer.getShortDescription())
-                    .longDescription(offer.getLongDescription())
-                    .attributes(offer.getAttributes())
-                    .active(offer.getActive())
-                    .build();
+        Offer savedOffer = offerRepository.save(offer);
+        lot.getOffers().add(savedOffer);
 
-            return ResponseEntity.status(HttpStatus.CREATED).body(offerResponse);
+        lotRepository.save(lot);
 
-        } catch (IllegalArgumentException e) {
-            logger.error(e.getMessage());
-            return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
-        } catch (Exception e) {
-            logger.error(e.getMessage());
-            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
-        }
+        OfferResponse offerResponse = OfferResponse.builder()
+                .id(savedOffer.getId())
+                .name(savedOffer.getName())
+                .createdAt(offer.getCreatedAt())
+                .price(offer.getPrice())
+                .shortDescription(offer.getShortDescription())
+                .longDescription(offer.getLongDescription())
+                .availability(offer.getAvailability())
+                .attributes(offer.getAttributes())
+                .active(offer.getActive())
+                .lot(LotResponse.builder()
+                        .id(lot.getId())
+                        .name(lot.getName())
+                        .build())
+                .build();
+
+        return ResponseEntity.status(HttpStatus.CREATED).body(offerResponse);
     }
 
     /**
@@ -87,9 +93,10 @@ public class OfferService {
      * @throws ResponseStatusException HTTP 204 Если офер не найден
      */
     @Transactional
-    public ResponseEntity<?> updateOffer(OfferRequest offerRequest) {
-        if (offerRequest == null) return new ResponseEntity<>("offerRequest is null", HttpStatus.BAD_REQUEST);
-        if (offerRequest.getId() == null) return new ResponseEntity<>("id is null", HttpStatus.BAD_REQUEST);
+    public ResponseEntity<?> update(OfferRequest offerRequest) {
+        if (offerRequest == null) throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "OfferRequest is null");
+        if (offerRequest.getId() == null)
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "OfferRequest id is null");
 
         Offer offer = offerRepository.findById(offerRequest.getId()).orElseThrow(() ->
                 new ResponseStatusException(HttpStatus.NOT_FOUND, "Offer not found for ID: " + offerRequest.getId()));
@@ -109,8 +116,18 @@ public class OfferService {
             changedData.put("longDescription", offerRequest.getLongDescription());
         }
         if (offerRequest.getAttributes() != null) {
-            offer.setAttributes(offerRequest.getAttributes());
-            changedData.put("attributes", offerRequest.getAttributes());
+            offer.getAttributes().putAll(offerRequest.getAttributes());
+            changedData.put("attributes", offer.getAttributes());
+        }
+
+        if (offerRequest.getPrice() != null) {
+            offer.setPrice(offerRequest.getPrice());
+            changedData.put("price", offerRequest.getPrice());
+        }
+
+        if (offerRequest.getAvailability() != null) {
+            offer.setAvailability(offerRequest.getAvailability());
+            changedData.put("availability", offerRequest.getAvailability());
         }
 
         if (changedData.isEmpty()) {
@@ -129,6 +146,7 @@ public class OfferService {
                 .price(offer.getPrice())
                 .shortDescription(offer.getShortDescription())
                 .longDescription(offer.getLongDescription())
+                .availability(offer.getAvailability())
                 .attributes(offer.getAttributes())
                 .active(offer.getActive())
                 .build();
@@ -137,18 +155,21 @@ public class OfferService {
     }
 
     @Transactional
-    public ResponseEntity<?> deleteOffer(OfferRequest offerRequest) {
-        if (offerRequest == null) return new ResponseEntity<>("offerRequest is null", HttpStatus.BAD_REQUEST);
-        if (offerRequest.getId() == null) return new ResponseEntity<>("id is null", HttpStatus.BAD_REQUEST);
-        Offer offer = offerRepository.findById(offerRequest.getId()).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
-        offerRepository.delete(offer);
+    public ResponseEntity<?> delete(OfferRequest offerRequest) {
+        if (offerRequest == null) throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "OfferRequest is null");
+        if (offerRequest.getId() == null)
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "OfferRequest id is null");
+        if (!offerRepository.existsById(offerRequest.getId()))
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Offer not found for ID: " + offerRequest.getId());
+        offerRepository.deleteById(offerRequest.getId());
         return new ResponseEntity<>("Offer delete by ID: " + offerRequest.getId(), HttpStatus.OK);
     }
 
     @Transactional(readOnly = true)
-    public ResponseEntity<?> getOffer(OfferRequest offerRequest) {
-        if (offerRequest == null) return new ResponseEntity<>("offerRequest is null", HttpStatus.BAD_REQUEST);
-        if (offerRequest.getId() == null) return new ResponseEntity<>("id is null", HttpStatus.BAD_REQUEST);
+    public ResponseEntity<?> get(OfferRequest offerRequest) {
+        if (offerRequest == null) throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "OfferRequest is null");
+        if (offerRequest.getId() == null)
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "OfferRequest id is null");
 
         Offer offer = offerRepository.findById(offerRequest.getId()).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
         OfferResponse offerResponse = OfferResponse.builder()
@@ -158,6 +179,7 @@ public class OfferService {
                 .price(offer.getPrice())
                 .shortDescription(offer.getShortDescription())
                 .longDescription(offer.getLongDescription())
+                .availability(offer.getAvailability())
                 .attributes(offer.getAttributes())
                 .active(offer.getActive())
                 .build();
@@ -179,46 +201,46 @@ public class OfferService {
      */
     @Transactional(readOnly = true)
     public ResponseEntity<?> search(OfferRequest request, Pageable pageable) {
-        try {
-            Specification<Offer> specification = Specification.where(null);
+        if (request == null) throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "OfferRequest is null");
+        if (pageable == null) throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Pageable is null");
 
-            if (request.getId() != null) {
-                specification = specification.and(OfferSpecifications.hasId(request.getId()));
-            }
+        Specification<Offer> specification = Specification.where(null);
 
-            if (request.getName() != null) {
-                specification = specification.and(OfferSpecifications.nameLike(request.getName()));
-            }
-
-            if (request.getLotId() != null) {
-                specification = specification.and(OfferSpecifications.hasLotId(request.getLotId()));
-            }
-
-
-            Page<Offer> offersPage = offerRepository.findAll(specification, pageable);
-            Page<OfferResponse> responsePage = offersPage.map(offer -> OfferResponse.builder()
-                    .id(offer.getId())
-                    .name(offer.getName())
-                    .createdAt(offer.getCreatedAt())
-                    .price(offer.getPrice())
-                    .shortDescription(offer.getShortDescription())
-                    .longDescription(offer.getLongDescription())
-                    .attributes(offer.getAttributes())
-                    .active(offer.getActive())
-                    .build());
-
-            if (responsePage.isEmpty()) {
-                logger.warn("No offers found with filter: {}", request);
-                return ResponseEntity.noContent().build();
-            }
-
-            return ResponseEntity.ok(responsePage);
-        } catch (IllegalArgumentException e) {
-            logger.error(e.getMessage());
-            return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
-        } catch (Exception e) {
-            logger.error(e.getMessage());
-            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+        if (request.getId() != null) {
+            specification = specification.and(OfferSpecifications.hasId(request.getId()));
         }
+
+        if (request.getName() != null) {
+            specification = specification.and(OfferSpecifications.nameLike(request.getName()));
+        }
+
+        if (request.getLotId() != null) {
+            specification = specification.and(OfferSpecifications.hasLotId(request.getLotId()));
+        }
+
+        if (request.getAttributes() != null && !request.getAttributes().isEmpty()) {
+            specification = specification.and(OfferSpecifications.hasAttributes(request.getAttributes()));
+        }
+
+
+        Page<Offer> offersPage = offerRepository.findAll(specification, pageable);
+        Page<OfferResponse> responsePage = offersPage.map(offer -> OfferResponse.builder()
+                .id(offer.getId())
+                .name(offer.getName())
+                .createdAt(offer.getCreatedAt())
+                .price(offer.getPrice())
+                .shortDescription(offer.getShortDescription())
+                .longDescription(offer.getLongDescription())
+                .availability(offer.getAvailability())
+                .attributes(offer.getAttributes())
+                .active(offer.getActive())
+                .build());
+
+        if (responsePage.isEmpty()) {
+            logger.warn("No offers found with filter: {}", request);
+            return ResponseEntity.noContent().build();
+        }
+
+        return ResponseEntity.ok(responsePage);
     }
 }

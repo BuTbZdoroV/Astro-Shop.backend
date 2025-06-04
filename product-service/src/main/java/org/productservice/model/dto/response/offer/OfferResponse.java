@@ -22,6 +22,7 @@ public class OfferResponse {
     Double price;
     Boolean active;
     Date createdAt;
+    Integer availability;
     Map<String, Object> attributes;
     LotResponse lot;
 }

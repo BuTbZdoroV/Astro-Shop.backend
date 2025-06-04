@@ -24,6 +24,7 @@ public class OfferRequest {
        String longDescription;
        Long lotId;
        Double price;
+       Integer availability;
        Map<String, Object> attributes;
 
 

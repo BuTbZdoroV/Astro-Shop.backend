@@ -3,18 +3,16 @@ package org.productservice.model.entity;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.vladmihalcea.hibernate.type.json.JsonBinaryType;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import lombok.experimental.SuperBuilder;
 import org.hibernate.annotations.Type;
-import org.productservice.model.dto.jackson.convert.JpaJsonConverter;
 
 import java.util.Date;
 import java.util.Map;
 
 @Entity
-@Data
+@Getter
+@Setter
 @SuperBuilder
 @NoArgsConstructor
 @AllArgsConstructor
@@ -28,6 +26,7 @@ public class Offer {
     private Double price;
     private Date createdAt;
     private Boolean active;
+    private Integer availability;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "lot_id")
