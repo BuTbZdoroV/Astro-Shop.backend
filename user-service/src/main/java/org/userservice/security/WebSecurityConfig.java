@@ -8,6 +8,7 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.logout.SecurityContextLogoutHandler;
 import org.userservice.service.auth.GoogleOAuthUserService;
+import org.userservice.service.auth.OAuth2AuthenticationSuccessHandler;
 
 @Configuration
 @EnableWebSecurity
@@ -21,11 +22,12 @@ public class WebSecurityConfig {
         http
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/", "/login", "/error", "/favicon.ico", "/css/**", "/js/**", "/ws/**").permitAll()
-                        .anyRequest().authenticated()
+                        .requestMatchers("/users/getUserPrincipalData").authenticated()
+                        .anyRequest().permitAll()
                 )
                 .oauth2Login(oAuth2Login -> oAuth2Login
-                        .userInfoEndpoint(userInfo -> userInfo.userService(googleOAuthUserService)))
+                        .userInfoEndpoint(userInfo -> userInfo.userService(googleOAuthUserService))
+                        .defaultSuccessUrl("http://localhost:3000/auth-success"))
                 .logout(logout -> logout
                         .logoutUrl("/logout")
                         .logoutSuccessUrl("/")
