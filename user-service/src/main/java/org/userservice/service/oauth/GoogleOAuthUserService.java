@@ -1,4 +1,4 @@
-package org.userservice.service.auth;
+package org.userservice.service.oauth;
 
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
@@ -15,12 +15,10 @@ import org.springframework.util.StringUtils;
 import org.userservice.model.authinfo.OAuthUserInfo;
 import org.userservice.model.authinfo.OAuthUserInfoFactory;
 import org.userservice.model.authinfo.UserPrincipal;
-import org.userservice.model.dto.request.ProductRequest;
 import org.userservice.model.entity.User;
 import org.userservice.repository.UserRepository;
 
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 
 @Service
 @RequiredArgsConstructor
@@ -36,12 +34,10 @@ public class GoogleOAuthUserService extends DefaultOAuth2UserService {
             return processUser(userRequest, oAuth2User);
         } catch (OAuth2AuthenticationException ex) {
             logger.error("OAuth2 authentication failed: {}", ex.getMessage());
-            throw ex;
+            throw new OAuth2AuthenticationException(OAuth2ErrorCodes.INVALID_REQUEST);
         } catch (Exception ex) {
             logger.error("Unexpected error during OAuth2 processing", ex);
-            throw new OAuth2AuthenticationException(
-                    new OAuth2Error("server_error", "Internal server error", null), ex
-            );
+            throw new OAuth2AuthenticationException(OAuth2ErrorCodes.INVALID_REQUEST);
         }
     }
 
@@ -79,8 +75,6 @@ public class GoogleOAuthUserService extends DefaultOAuth2UserService {
             existingUser = registerNewUser(userRequest, userInfo);
         }
 
-        callProductServiceToAddProduct(existingUser.getId());
-
         return UserPrincipal.create(existingUser, oAuth2User.getAttributes());
     }
 
@@ -97,20 +91,12 @@ public class GoogleOAuthUserService extends DefaultOAuth2UserService {
                 .name(userInfo.getName())
                 .imageUrl(userInfo.getImageUrl())
                 .authProvider(User.AuthProvider.valueOf(userRequest.getClientRegistration().getRegistrationId()))
+                .roles(Set.of(User.Role.USER))
                 .build();
 
         User savedUser = userRepository.save(user);
         logger.info("New user registered: {}", savedUser.getEmail());
         return savedUser;
-    }
-
-    private void callProductServiceToAddProduct(Long userId) {
-        ProductRequest productRequest = ProductRequest.builder()
-                .name("CS5")
-                .description("Новая игра")
-                .category(ProductRequest.Category.GAMES)
-                .price(999999.9)
-                .build();
     }
 
     @Override

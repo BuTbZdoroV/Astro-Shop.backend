@@ -15,7 +15,7 @@ import static org.springframework.data.domain.Sort.Direction.DESC;
 
 @Tag(name = "Offer Management", description = "API для управления оферами")
 @RestController
-@RequestMapping("/offers")
+@RequestMapping("/api/offers")
 @RequiredArgsConstructor
 public final class OfferController {
     private final OfferService offerService;
@@ -32,11 +32,11 @@ public final class OfferController {
     }
 
     @GetMapping("/get")
-    public ResponseEntity<?> get(@RequestBody @Valid OfferRequest offerRequest) {
-        return offerService.get(offerRequest);
+    public ResponseEntity<?> get(@RequestParam Long id) {
+        return offerService.getAll(new OfferRequest(id, null, null, null, null, null, null, null));
     }
 
-    @Operation(summary = "Поиск офера", description = "Фильтрация по заданным параметрам")
+    @Operation(summary = "Поиск офера", description = "Фильтрация по заданным параметрам, offer Request - null допускается")
     @PostMapping("/search")
     public ResponseEntity<?> search(@RequestBody @Valid OfferRequest offerRequest,
                                     @PageableDefault(sort = "createdAt", direction = DESC) Pageable pageable) {

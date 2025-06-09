@@ -23,7 +23,9 @@ import org.springframework.data.domain.Pageable;
 
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -166,13 +168,18 @@ public class OfferService {
     }
 
     @Transactional(readOnly = true)
-    public ResponseEntity<?> get(OfferRequest offerRequest) {
+    public ResponseEntity<?> getAll(OfferRequest offerRequest) {
         if (offerRequest == null) throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "OfferRequest is null");
-        if (offerRequest.getId() == null)
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "OfferRequest id is null");
+        if (offerRequest.getLotId() == null)
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "LotId is null");
 
-        Offer offer = offerRepository.findById(offerRequest.getId()).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
-        OfferResponse offerResponse = OfferResponse.builder()
+        List<Offer> offers = offerRepository.findAllByLotId(offerRequest.getLotId());
+
+        if (offers.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+        }
+
+        List<OfferResponse> offerResponse = offers.stream().map(offer -> OfferResponse.builder()
                 .id(offer.getId())
                 .name(offer.getName())
                 .createdAt(offer.getCreatedAt())
@@ -182,7 +189,7 @@ public class OfferService {
                 .availability(offer.getAvailability())
                 .attributes(offer.getAttributes())
                 .active(offer.getActive())
-                .build();
+                .build()).toList();
 
         return ResponseEntity.ok(offerResponse);
     }
@@ -196,7 +203,7 @@ public class OfferService {
      * @return Страница (Page) с отфильтрованными продуктами в формате {@link OfferResponse}.
      * Возвращает HTTP 200 с данными.
      * @throws ResponseStatusException HTTP 204 (No Content), если продукты не найдены.
-     * @example GET /api/offers?name=Phone&page=0&size=10
+     * @example GET /offers?name=Phone&page=0&size=10
      * @see OfferSpecifications
      */
     @Transactional(readOnly = true)

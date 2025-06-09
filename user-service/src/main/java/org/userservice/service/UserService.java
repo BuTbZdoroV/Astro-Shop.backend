@@ -60,6 +60,7 @@ public class UserService {
                 .email(findedUser.getEmail())
                 .imageUrl(findedUser.getImageUrl())
                 .authProvider(findedUser.getAuthProvider())
+                .roles(findedUser.getRoles())
                 .build();
 
         return ResponseEntity.status(HttpStatus.OK).body(userResponse);

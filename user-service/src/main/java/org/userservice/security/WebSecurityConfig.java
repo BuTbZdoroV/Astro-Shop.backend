@@ -5,10 +5,16 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.logout.SecurityContextLogoutHandler;
-import org.userservice.service.auth.GoogleOAuthUserService;
-import org.userservice.service.auth.OAuth2AuthenticationSuccessHandler;
+import org.userservice.model.authinfo.UserPrincipal;
+import org.userservice.service.utils.JwtUtils;
+import org.userservice.service.oauth.GoogleOAuthUserService;
+
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 
 @Configuration
 @EnableWebSecurity
@@ -16,18 +22,28 @@ import org.userservice.service.auth.OAuth2AuthenticationSuccessHandler;
 public class WebSecurityConfig {
 
     private final GoogleOAuthUserService googleOAuthUserService;
+    private final JwtUtils jwtUtils;
 
     @Bean
     public SecurityFilterChain configure(HttpSecurity http) throws Exception {
         http
-                .csrf(csrf -> csrf.disable())
+                .csrf(AbstractHttpConfigurer::disable)
+                .cors(cors -> cors.disable())
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/users/getUserPrincipalData").authenticated()
+                        .requestMatchers("/", "/login", "/error", "/favicon.ico", "/css/**", "/js/**", "/ws/**", "/api/auth/**").permitAll()
                         .anyRequest().permitAll()
                 )
                 .oauth2Login(oAuth2Login -> oAuth2Login
                         .userInfoEndpoint(userInfo -> userInfo.userService(googleOAuthUserService))
-                        .defaultSuccessUrl("http://localhost:3000/auth-success"))
+                        .successHandler((request, response, authentication) -> {
+                            OAuth2AuthenticationToken oauthToken = (OAuth2AuthenticationToken) authentication;
+                            UserPrincipal userPrincipal = (UserPrincipal) oauthToken.getPrincipal();
+
+                            String jwt = jwtUtils.generateToken(userPrincipal);
+                            response.setHeader("Authorization", "Bearer " + jwt);
+
+                            response.sendRedirect("http://localhost:3000/oauth-callback/?token=" + URLEncoder.encode(jwt, StandardCharsets.UTF_8));
+                        }))
                 .logout(logout -> logout
                         .logoutUrl("/logout")
                         .logoutSuccessUrl("/")
@@ -37,5 +53,6 @@ public class WebSecurityConfig {
                         .permitAll());
         return http.build();
     }
+
 
 }

@@ -2,10 +2,7 @@ package org.productservice.model.entity;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -31,4 +28,11 @@ public class Lot {
     @Builder.Default
     private List<Offer> offers = new ArrayList<>();
 
+    @Override
+    public String toString() {
+        return "Lot{" +
+                "name='" + name + '\'' +
+                ", id=" + id +
+                '}';
+    }
 }

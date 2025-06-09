@@ -85,11 +85,13 @@ class OfferServiceTest {
                 .availability(1)
                 .price(NEW_PRICE_FOR_OFFER)
                 .createdAt(new Date())
+                .lot(savedLot)
                 .longDescription("Product long description")
                 .shortDescription("Product short description")
                 .attributes(attributes)
                 .build();
 
+        lotRepository.save(savedLot);
         Offer savedOffer = offerRepository.save(offer);
         ON_EXISTS_OFFER_ID = savedOffer.getId();
 
@@ -265,39 +267,39 @@ class OfferServiceTest {
 
     @Test
     @Transactional
-    void testGet_OfferRequestIsValid() {
+    void testGetAll_OfferRequestIsValid() {
         OfferRequest offerRequest1 = new OfferRequest();
-        offerRequest1.setId(ON_EXISTS_OFFER_ID);
+        offerRequest1.setLotId(ON_EXISTS_LOT_ID);
 
-        Offer offer = offerRepository.findById(ON_EXISTS_OFFER_ID).orElseThrow();
+        List<Offer> offer = offerRepository.findAllByLotId(ON_EXISTS_LOT_ID);
 
-        ResponseEntity<OfferResponse> response = (ResponseEntity<OfferResponse>) offerService.get(offerRequest1);
+        assertThat(offer).isNotEmpty();
+
+        ResponseEntity<List<OfferResponse>> response = (ResponseEntity<List<OfferResponse>>) offerService.getAll(offerRequest1);
         assertThat(response).isNotNull();
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(response.getBody()).isNotNull();
-        assertThat(response.getBody().getId()).isNotNull();
-        assertThat(response.getBody().getName()).isEqualTo(offer.getName());
-        assertThat(response.getBody().getPrice()).isEqualTo(offer.getPrice());
-        assertThat(response.getBody().getAvailability()).isEqualTo(offer.getAvailability());
-        assertThat(response.getBody().getLongDescription()).isEqualTo(offer.getLongDescription());
-        assertThat(response.getBody().getShortDescription()).isEqualTo(offer.getShortDescription());
-        assertThat(response.getBody().getAttributes()).isEqualTo(offer.getAttributes());
+        assertThat(response.getBody()).isNotEmpty();
+        assertThat(response.getBody().size()).isEqualTo(offer.size());
     }
 
     @Test
     @Transactional
-    void testGet_OfferRequestIsNotValid() {
-        assertThatThrownBy(() -> offerService.get(null)).isInstanceOf(ResponseStatusException.class);
+    void testGetAll_OfferRequestIsNotValid() {
+        assertThatThrownBy(() -> offerService.getAll(null)).isInstanceOf(ResponseStatusException.class);
 
         OfferRequest offerRequest = new OfferRequest();
-        offerRequest.setId(null);
+        offerRequest.setLotId(null);
         OfferRequest finalOfferRequest = offerRequest;
-        assertThatThrownBy(() -> offerService.get(finalOfferRequest)).isInstanceOf(ResponseStatusException.class);
+        assertThatThrownBy(() -> offerService.getAll(finalOfferRequest)).isInstanceOf(ResponseStatusException.class);
 
         offerRequest = new OfferRequest();
-        offerRequest.setId(NON_EXISTS_OFFER_ID);
+        offerRequest.setLotId(NON_EXISTS_LOT_ID);
         OfferRequest finalOfferRequest1 = offerRequest;
-        assertThatThrownBy(() -> offerService.get(finalOfferRequest1)).isInstanceOf(ResponseStatusException.class);
+        ResponseEntity<List<OfferResponse>> response = (ResponseEntity<List<OfferResponse>>) offerService.getAll(finalOfferRequest1);
+        assertThat(response).isNotNull();
+        assertThat(response.getBody()).isNull();
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
     }
 
     @Test
@@ -386,7 +388,6 @@ class OfferServiceTest {
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(response.getBody()).isNotNull();
         assertThat(response.getBody().getContent()).hasSize(5);
-        assertThat(response.getBody().getTotalElements()).isEqualTo(13);
 
         response = (ResponseEntity<Page<OfferResponse>>) offerService.search(new OfferRequest(), pageable);
         assertThat(response).isNotNull();

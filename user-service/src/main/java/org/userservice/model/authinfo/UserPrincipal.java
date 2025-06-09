@@ -2,7 +2,9 @@ package org.userservice.model.authinfo;
 
 import lombok.Builder;
 import lombok.Data;
+import lombok.ToString;
 import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.userservice.model.entity.User;
 
@@ -13,6 +15,7 @@ import java.util.Map;
 
 @Data
 @Builder
+@ToString
 public class UserPrincipal implements OAuth2User {
 
     private Long id;
@@ -20,14 +23,21 @@ public class UserPrincipal implements OAuth2User {
     private String email;
     private String imageUrl;
     private Map<String, Object> attributes;
+    private Collection<? extends GrantedAuthority> authorities;
 
     public static UserPrincipal create(User user, Map<String, Object> attributes) {
+
+        List<SimpleGrantedAuthority> authorities = user.getRoles().stream()
+                .map(role -> new SimpleGrantedAuthority(role.name()))
+                .toList();
+
         return UserPrincipal.builder()
                 .id(user.getId())
                 .name(user.getName())
                 .email(user.getEmail())
                 .imageUrl(user.getImageUrl())
                 .attributes(attributes)
+                .authorities(authorities)
                 .build();
     }
 
@@ -38,7 +48,7 @@ public class UserPrincipal implements OAuth2User {
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return List.of();
+        return authorities;
     }
 
     @Override

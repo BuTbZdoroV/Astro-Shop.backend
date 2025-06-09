@@ -1,4 +1,4 @@
-package org.userservice.service.auth;
+package org.userservice.service.oauth;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
