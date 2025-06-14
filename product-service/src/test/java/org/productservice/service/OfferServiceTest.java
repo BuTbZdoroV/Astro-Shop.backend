@@ -10,6 +10,7 @@ import org.productservice.model.entity.Product;
 import org.productservice.repository.LotRepository;
 import org.productservice.repository.OfferRepository;
 import org.productservice.repository.ProductRepository;
+import org.productservice.service.user.OfferService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.domain.Page;
@@ -39,10 +40,11 @@ class OfferServiceTest {
     private static final String NON_EXISTS_OFFER_NAME = "NON_EXISTS_OFFER_NAME";
     private static final String NEW_NAME_FOR_OFFER = "NEW_NAME_FOR_OFFER";
     public static final double NEW_PRICE_FOR_OFFER = 100D;
+    public static final long ON_EXISTS_USER_ID = 999L;
     private static Long ON_EXISTS_LOT_ID;
     private static Long ON_EXISTS_OFFER_ID;
-    private static final Long NON_EXISTS_OFFER_ID = 999L;
-    private static final Long NON_EXISTS_LOT_ID = 999L;
+    private static final Long NON_EXISTS_OFFER_ID = ON_EXISTS_USER_ID;
+    private static final Long NON_EXISTS_LOT_ID = ON_EXISTS_USER_ID;
 
     @Autowired
     OfferService offerService;
@@ -89,6 +91,7 @@ class OfferServiceTest {
                 .longDescription("Product long description")
                 .shortDescription("Product short description")
                 .attributes(attributes)
+                .userId(ON_EXISTS_USER_ID)
                 .build();
 
         lotRepository.save(savedLot);
@@ -100,23 +103,21 @@ class OfferServiceTest {
 
     @Test
     @Transactional
-    void testAdd_OfferRequestIsValid() {
+    void testCreate_OfferRequestIsValid() {
         //Проверка 1
         OfferRequest offerRequest = new OfferRequest();
         offerRequest.setLotId(ON_EXISTS_LOT_ID);
         offerRequest.setName(ON_EXISTS_OFFER_NAME);
         offerRequest.setPrice(NEW_PRICE_FOR_OFFER);
 
-        ResponseEntity<OfferResponse> response = (ResponseEntity<OfferResponse>) offerService.add(offerRequest);
+        ResponseEntity<OfferResponse> response = (ResponseEntity<OfferResponse>) offerService.create(offerRequest, ON_EXISTS_USER_ID);
 
         assertThat(response).isNotNull();
         assertThat(response.getBody()).isNotNull();
         assertThat(response.getBody().getId()).isNotNull();
         assertThat(response.getBody().getName()).isEqualTo(ON_EXISTS_OFFER_NAME);
-        assertThat(response.getBody().getLot().getId()).isEqualTo(ON_EXISTS_LOT_ID);
         assertThat(response.getBody().getPrice()).isEqualTo(NEW_PRICE_FOR_OFFER);
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CREATED);
-        assertThat(lotRepository.findById(response.getBody().getLot().getId())).isNotNull();
 
         //Проверка 2
         offerRequest = new OfferRequest();
@@ -124,22 +125,20 @@ class OfferServiceTest {
         offerRequest.setName(NON_EXISTS_OFFER_NAME);
         offerRequest.setPrice(NEW_PRICE_FOR_OFFER);
 
-        response = (ResponseEntity<OfferResponse>) offerService.add(offerRequest);
+        response = (ResponseEntity<OfferResponse>) offerService.create(offerRequest, ON_EXISTS_USER_ID);
 
         assertThat(response).isNotNull();
         assertThat(response.getBody()).isNotNull();
         assertThat(response.getBody().getId()).isNotNull();
         assertThat(response.getBody().getName()).isEqualTo(NON_EXISTS_OFFER_NAME);
-        assertThat(response.getBody().getLot().getId()).isEqualTo(ON_EXISTS_LOT_ID);
         assertThat(response.getBody().getPrice()).isEqualTo(NEW_PRICE_FOR_OFFER);
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CREATED);
-        assertThat(lotRepository.findById(response.getBody().getLot().getId())).isNotNull();
     }
 
     @Test
     @Transactional
-    void testAdd_OfferRequestIsNotValid() {
-        assertThatThrownBy(() -> offerService.add(null)).isInstanceOf(ResponseStatusException.class);
+    void testCreate_OfferRequestIsNotValid() {
+        assertThatThrownBy(() -> offerService.create(null, ON_EXISTS_USER_ID)).isInstanceOf(ResponseStatusException.class);
 
         OfferRequest offerRequest = new OfferRequest();
         offerRequest.setLotId(NON_EXISTS_LOT_ID);
@@ -147,7 +146,7 @@ class OfferServiceTest {
         offerRequest.setPrice(NEW_PRICE_FOR_OFFER);
 
         OfferRequest finalOfferRequest3 = offerRequest;
-        assertThatThrownBy(() -> offerService.add(finalOfferRequest3))
+        assertThatThrownBy(() -> offerService.create(finalOfferRequest3, ON_EXISTS_USER_ID))
                 .isInstanceOf(ResponseStatusException.class);
 
         offerRequest = new OfferRequest();
@@ -155,7 +154,7 @@ class OfferServiceTest {
         offerRequest.setName("");
         offerRequest.setPrice(NEW_PRICE_FOR_OFFER);
         OfferRequest finalOfferRequest2 = offerRequest;
-        assertThatThrownBy(() -> offerService.add(finalOfferRequest2))
+        assertThatThrownBy(() -> offerService.create(finalOfferRequest2, ON_EXISTS_USER_ID))
                 .isInstanceOf(ResponseStatusException.class);
 
         offerRequest = new OfferRequest();
@@ -163,14 +162,14 @@ class OfferServiceTest {
         offerRequest.setName(NON_EXISTS_OFFER_NAME);
         offerRequest.setPrice(NEW_PRICE_FOR_OFFER);
         OfferRequest finalOfferRequest1 = offerRequest;
-        assertThatThrownBy(() -> offerService.add(finalOfferRequest1)).isInstanceOf(ResponseStatusException.class);
+        assertThatThrownBy(() -> offerService.create(finalOfferRequest1, ON_EXISTS_USER_ID)).isInstanceOf(ResponseStatusException.class);
 
         offerRequest = new OfferRequest();
         offerRequest.setLotId(ON_EXISTS_LOT_ID);
         offerRequest.setName(NON_EXISTS_OFFER_NAME);
         offerRequest.setPrice(null);
         OfferRequest finalOfferRequest = offerRequest;
-        assertThatThrownBy(() -> offerService.add(finalOfferRequest)).isInstanceOf(ResponseStatusException.class);
+        assertThatThrownBy(() -> offerService.create(finalOfferRequest, ON_EXISTS_USER_ID)).isInstanceOf(ResponseStatusException.class);
     }
 
     @Test
@@ -208,13 +207,6 @@ class OfferServiceTest {
         //Проверка 2
         offerRequest = new OfferRequest();
         offerRequest.setId(ON_EXISTS_OFFER_ID);
-        offerRequest.setLotId(null);
-        offerRequest.setName(null);
-        offerRequest.setPrice(null);
-        offerRequest.setAvailability(null);
-        offerRequest.setLongDescription(null);
-        offerRequest.setShortDescription(null);
-        offerRequest.setAttributes(null);
 
         response = (ResponseEntity<OfferResponse>) offerService.update(offerRequest);
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_MODIFIED);
@@ -243,7 +235,7 @@ class OfferServiceTest {
         OfferRequest offerRequest = new OfferRequest();
         offerRequest.setId(ON_EXISTS_OFFER_ID);
 
-        ResponseEntity<?> response = offerService.delete(offerRequest);
+        ResponseEntity<?> response = offerService.delete(offerRequest, ON_EXISTS_USER_ID);
         assertThat(response.getBody()).isNotNull();
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThatThrownBy(() -> offerRepository.findById(ON_EXISTS_OFFER_ID).orElseThrow());
@@ -252,17 +244,17 @@ class OfferServiceTest {
     @Test
     @Transactional
     void testDelete_OfferRequestIsNotValid() {
-        assertThatThrownBy(() -> offerService.delete(null)).isInstanceOf(ResponseStatusException.class);
+        assertThatThrownBy(() -> offerService.delete(null, ON_EXISTS_USER_ID)).isInstanceOf(ResponseStatusException.class);
 
         OfferRequest offerRequest = new OfferRequest();
         offerRequest.setId(null);
         OfferRequest finalOfferRequest = offerRequest;
-        assertThatThrownBy(() -> offerService.delete(finalOfferRequest)).isInstanceOf(ResponseStatusException.class);
+        assertThatThrownBy(() -> offerService.delete(finalOfferRequest, ON_EXISTS_USER_ID)).isInstanceOf(ResponseStatusException.class);
 
         offerRequest = new OfferRequest();
         offerRequest.setId(NON_EXISTS_OFFER_ID);
         OfferRequest finalOfferRequest1 = offerRequest;
-        assertThatThrownBy(() -> offerService.delete(finalOfferRequest1)).isInstanceOf(ResponseStatusException.class);
+        assertThatThrownBy(() -> offerService.delete(finalOfferRequest1, ON_EXISTS_USER_ID)).isInstanceOf(ResponseStatusException.class);
     }
 
     @Test
@@ -331,6 +323,7 @@ class OfferServiceTest {
                     .name("Offer " + i)
                     .lot(lotRepository.findById(ON_EXISTS_LOT_ID).orElseThrow())
                     .attributes(attributes)
+                    .userId(ON_EXISTS_USER_ID)
                     .build();
             offerRepository.save(offer);
         }

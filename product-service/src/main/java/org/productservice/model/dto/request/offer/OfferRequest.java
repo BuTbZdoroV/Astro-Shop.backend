@@ -23,8 +23,10 @@ public class OfferRequest {
        @Size(min = 0, max = 1000)
        String longDescription;
        Long lotId;
+       Long userId;
        Double price;
        Integer availability;
+       Boolean active;
        Map<String, Object> attributes;
 
 

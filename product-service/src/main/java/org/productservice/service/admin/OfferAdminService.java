@@ -1,0 +1,33 @@
+package org.productservice.service.admin;
+
+import lombok.RequiredArgsConstructor;
+import org.productservice.model.dto.request.offer.OfferRequest;
+import org.productservice.model.entity.Offer;
+import org.productservice.repository.OfferRepository;
+import org.productservice.service.utils.OfferUtils;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
+
+@Service
+@RequiredArgsConstructor
+public class OfferAdminService {
+
+    private final OfferRepository offerRepository;
+    private final OfferUtils offerUtils;
+
+    @Transactional
+    public ResponseEntity<?> delete(OfferRequest offerRequest) {
+        if (offerRequest == null) throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Request must not be null");
+        if (offerRequest.getId() == null)
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "offer id must not be null");
+
+        Offer offer = offerUtils.findByRequest(offerRequest, offerRepository);
+        offerRepository.delete(offer);
+
+        return ResponseEntity.ok("Offer with id" + offerRequest.getId() + " deleted successfully");
+    }
+
+}

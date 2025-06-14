@@ -1,4 +1,4 @@
-package org.userservice.service;
+package org.userservice.service.user;
 
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
@@ -7,12 +7,11 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestHeader;
-import org.userservice.controller.JwtController;
 import org.userservice.model.dto.request.UserRequest;
 import org.userservice.model.dto.response.UserResponse;
 import org.userservice.service.utils.JwtUtils;
+
+import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -28,8 +27,8 @@ public class JwtService {
      *
      * @param token JWT токен с префиксом "Bearer "
      * @return ResponseEntity<></> с DTO данными пользователя если токен валиден,
-     *         UNAUTHORIZED (401) если токен невалиден,
-     *         NOT_FOUND (404) если пользователь не найден
+     * UNAUTHORIZED (401) если токен невалиден,
+     * NOT_FOUND (404) если пользователь не найден
      */
     @Transactional(readOnly = true)
     public ResponseEntity<?> validateToken(String token) {
@@ -43,6 +42,11 @@ public class JwtService {
             }
 
             Long userId = Long.valueOf(jwtUtils.extractUserId(jwt));
+            if (userId == -1) //Анонимный пользователь
+                return ResponseEntity.ok(UserResponse.builder()
+                        .id(userId)
+                        .build());
+
             ResponseEntity<UserResponse> response = (ResponseEntity<UserResponse>) userService.find(new UserRequest(userId, null, null));
 
             if (!response.getStatusCode().is2xxSuccessful() || response.getBody() == null) {

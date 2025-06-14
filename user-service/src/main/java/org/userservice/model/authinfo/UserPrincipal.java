@@ -24,6 +24,7 @@ public class UserPrincipal implements OAuth2User {
     private String imageUrl;
     private Map<String, Object> attributes;
     private Collection<? extends GrantedAuthority> authorities;
+    private User.AuthProvider authProvider;
 
     public static UserPrincipal create(User user, Map<String, Object> attributes) {
 
@@ -38,6 +39,7 @@ public class UserPrincipal implements OAuth2User {
                 .imageUrl(user.getImageUrl())
                 .attributes(attributes)
                 .authorities(authorities)
+                .authProvider(user.getAuthProvider())
                 .build();
     }
 

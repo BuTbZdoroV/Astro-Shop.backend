@@ -8,6 +8,8 @@ import org.productservice.model.entity.Lot;
 import org.productservice.model.entity.Product;
 import org.productservice.repository.LotRepository;
 import org.productservice.repository.ProductRepository;
+import org.productservice.service.admin.LotAdminService;
+import org.productservice.service.user.LotService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.HttpStatus;
@@ -36,6 +38,9 @@ class LotServiceTest {
 
     @Autowired
     LotService lotService;
+
+    @Autowired
+    LotAdminService lotAdminService;
 
     Long ON_EXISTS_PRODUCT_ID;
 
@@ -68,7 +73,7 @@ class LotServiceTest {
         lotRequest.setName(ON_EXISTS_LOT_NAME);
         lotRequest.setProductId(ON_EXISTS_PRODUCT_ID);
 
-        ResponseEntity<LotResponse> response = (ResponseEntity<LotResponse>) lotService.create(lotRequest);
+        ResponseEntity<LotResponse> response = (ResponseEntity<LotResponse>) lotAdminService.create(lotRequest);
 
         assertThat(response).isNotNull();
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CREATED);
@@ -81,7 +86,7 @@ class LotServiceTest {
         lotRequest2.setName(NON_EXISTS_LOT_NAME);
         lotRequest2.setProductId(ON_EXISTS_PRODUCT_ID);
 
-        ResponseEntity<LotResponse> response2 = (ResponseEntity<LotResponse>) lotService.create(lotRequest2);
+        ResponseEntity<LotResponse> response2 = (ResponseEntity<LotResponse>) lotAdminService.create(lotRequest2);
 
         assertThat(response2).isNotNull();
         assertThat(response2.getStatusCode()).isEqualTo(HttpStatus.CREATED);
@@ -94,28 +99,28 @@ class LotServiceTest {
     @Transactional
     void testCreate_LotRequestIsNotValid() {
         //Проверка 1
-        assertThatThrownBy(() -> lotService.create(null))
+        assertThatThrownBy(() -> lotAdminService.create(null))
                 .isInstanceOf(ResponseStatusException.class);
 
         //Проверка 2
         LotRequest lotRequest1 = new LotRequest();
         lotRequest1.setName(ON_EXISTS_LOT_NAME);
         lotRequest1.setProductId(null);
-        assertThatThrownBy(() -> lotService.create(lotRequest1))
+        assertThatThrownBy(() -> lotAdminService.create(lotRequest1))
                 .isInstanceOf(ResponseStatusException.class);
 
         //Проверка 3
         LotRequest lotRequest2 = new LotRequest();
         lotRequest2.setName(ON_EXISTS_LOT_NAME);
         lotRequest2.setProductId(NON_EXISTS_PRODUCT_ID);
-        assertThatThrownBy(() -> lotService.create(lotRequest2))
+        assertThatThrownBy(() -> lotAdminService.create(lotRequest2))
                 .isInstanceOf(ResponseStatusException.class);
 
         //Проверка 4
         LotRequest lotRequest3 = new LotRequest();
         lotRequest3.setName("");
         lotRequest3.setProductId(ON_EXISTS_PRODUCT_ID);
-        assertThatThrownBy(() -> lotService.create(lotRequest3))
+        assertThatThrownBy(() -> lotAdminService.create(lotRequest3))
                 .isInstanceOf(ResponseStatusException.class);
     }
 }

@@ -45,7 +45,7 @@ public class WebSecurityConfig {
                             response.sendRedirect("http://localhost:3000/oauth-callback/?token=" + URLEncoder.encode(jwt, StandardCharsets.UTF_8));
                         }))
                 .logout(logout -> logout
-                        .logoutUrl("/logout")
+                        .logoutUrl("/oauth2/logout")
                         .logoutSuccessUrl("/")
                         .addLogoutHandler(new SecurityContextLogoutHandler())
                         .invalidateHttpSession(true)

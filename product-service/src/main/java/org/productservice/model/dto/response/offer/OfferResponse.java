@@ -21,6 +21,7 @@ public class OfferResponse {
     String longDescription;
     Double price;
     Boolean active;
+    Long userId;
     Date createdAt;
     Integer availability;
     Map<String, Object> attributes;

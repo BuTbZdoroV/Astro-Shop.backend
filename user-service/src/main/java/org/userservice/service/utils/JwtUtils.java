@@ -27,11 +27,16 @@ public class JwtUtils {
         this.secretKey = Keys.hmacShaKeyFor(secretKeyString.getBytes(StandardCharsets.UTF_8));
     }
 
-    public String generateToken(UserPrincipal userDetails) {
+    public String generateToken(UserPrincipal userPrincipal) {
+        return generateToken(userPrincipal, expirationTime);
+    }
+
+    public String generateToken(UserPrincipal userDetails, Long expirationTime) {
         Map<String, Object> claims = new HashMap<>();
         claims.put("roles", userDetails.getAuthorities().stream()
                 .map(GrantedAuthority::getAuthority)
                 .collect(Collectors.toList()));
+        claims.put("authProvider", userDetails.getAuthProvider());
 
         return Jwts.builder()
                 .setClaims(claims)

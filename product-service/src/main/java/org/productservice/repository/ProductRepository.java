@@ -13,7 +13,7 @@ import java.util.Optional;
 public interface ProductRepository extends JpaRepository<Product, Long> {
     Optional<Product> findByName(String name);
 
-    @Query("select distinct p from Product p join fetch p.lots")
+    @Query("select distinct p from Product p full join fetch p.lots")
     List<Product> findAllWithLots();
 
     @Query("SELECT DISTINCT p FROM Product p LEFT JOIN FETCH p.lots WHERE p.id = :id")

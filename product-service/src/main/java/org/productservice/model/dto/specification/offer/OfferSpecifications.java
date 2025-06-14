@@ -26,6 +26,11 @@ public class OfferSpecifications {
                 lotId != null ? criteriaBuilder.equal(root.get("lot").get("id"), lotId) : null;
     }
 
+    public static Specification<Offer> hasUserId(Long userId) {
+        return (root, query, criteriaBuilder) ->
+                userId != null ? criteriaBuilder.equal(root.get("userId"), userId) : null;
+    }
+
     public static Specification<Offer> hasAttributes(Map<String, Object> attributes) {
         return (root, query, criteriaBuilder) -> {
             if (attributes == null || attributes.isEmpty()) {

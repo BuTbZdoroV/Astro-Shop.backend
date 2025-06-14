@@ -28,6 +28,9 @@ public class Offer {
     private Boolean active;
     private Integer availability;
 
+    @Column(nullable = false)
+    private Long userId;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "lot_id")
     private Lot lot;

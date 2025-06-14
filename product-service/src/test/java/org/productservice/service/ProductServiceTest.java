@@ -6,6 +6,8 @@ import org.productservice.model.dto.request.product.ProductRequest;
 import org.productservice.model.dto.response.product.ProductResponse;
 import org.productservice.model.entity.Product;
 import org.productservice.repository.ProductRepository;
+import org.productservice.service.admin.ProductAdminService;
+import org.productservice.service.user.ProductService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.HttpStatus;
@@ -30,6 +32,9 @@ class ProductServiceTest {
     @Autowired
     ProductService productService;
 
+    @Autowired
+    ProductAdminService productAdminService;
+
     @BeforeEach
     @Transactional
     void setUp() {
@@ -49,7 +54,7 @@ class ProductServiceTest {
         productRequest1.setName(NON_EXISTS_PRODUCT_NAME);
         productRequest1.setDescription("product");
 
-        ResponseEntity<ProductResponse> responseEntity1 = (ResponseEntity<ProductResponse>) productService.create(productRequest1);
+        ResponseEntity<ProductResponse> responseEntity1 = (ResponseEntity<ProductResponse>) productAdminService.create(productRequest1);
 
         assertThat(responseEntity1.getBody().getId()).isNotNull();
         assertThat(responseEntity1.getBody().getName()).isEqualTo(NON_EXISTS_PRODUCT_NAME);
@@ -61,7 +66,7 @@ class ProductServiceTest {
         productRequest2.setName(ON_EXISTS_PRODUCT_NAME);
         productRequest2.setDescription("product");
 
-        ResponseEntity<ProductResponse> responseEntity2 = (ResponseEntity<ProductResponse>) productService.create(productRequest2);
+        ResponseEntity<ProductResponse> responseEntity2 = (ResponseEntity<ProductResponse>) productAdminService.create(productRequest2);
 
         assertThat(responseEntity2.getBody().getId()).isNotNull();
         assertThat(responseEntity2.getBody().getName()).isEqualTo(ON_EXISTS_PRODUCT_NAME);
@@ -77,11 +82,11 @@ class ProductServiceTest {
         productRequest1.setName("");
         productRequest1.setDescription("product");
 
-        assertThatThrownBy(() -> productService.create(productRequest1))
+        assertThatThrownBy(() -> productAdminService.create(productRequest1))
                 .isInstanceOf(ResponseStatusException.class);
 
         //Проверка 2
-        assertThatThrownBy(() -> productService.create(null))
+        assertThatThrownBy(() -> productAdminService.create(null))
                 .isInstanceOf(ResponseStatusException.class);
     }
 
