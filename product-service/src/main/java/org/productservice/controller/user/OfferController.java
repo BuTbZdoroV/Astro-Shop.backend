@@ -37,12 +37,18 @@ public final class OfferController {
 
     @GetMapping("/get")
     public ResponseEntity<?> get(@RequestParam Long offerId) {
-        return offerService.get(new OfferRequest(offerId, null, null, null, null, null, null,null, null, null));
+        return offerService.get(OfferRequest.builder()
+                .id(offerId)
+                .build());
     }
 
+    @Operation(description = "Получение всех активных оферов по лоту")
     @GetMapping("/getAll")
     public ResponseEntity<?> getAll(@RequestParam Long lotId) {
-        return offerService.getAll(new OfferRequest(null, null, null, null, lotId,null,  null,null, true, null));
+        return offerService.getAll(OfferRequest.builder()
+                .lotId(lotId)
+                .active(true)
+                .build());
     }
 
     @PostMapping("/searchAllByUser")
@@ -50,7 +56,7 @@ public final class OfferController {
                                              @PageableDefault(sort = "createdAt", direction = DESC) Pageable pageable,
                                              @RequestHeader(value = "X-User-Id") Long userId) {
         if (userId == null || userId == -1) throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "UserId is null");
-        offerRequest.setUserId(userId);
+
         return offerService.search(offerRequest, pageable);
     }
 

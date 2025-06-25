@@ -6,6 +6,7 @@ import org.productservice.model.dto.response.product.ProductResponse;
 import org.productservice.model.entity.Product;
 import org.productservice.repository.ProductRepository;
 import org.productservice.service.user.ProductService;
+import org.productservice.service.utils.ProductUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -15,15 +16,15 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.HashMap;
+import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
 public class ProductAdminService {
     private final Logger logger = LoggerFactory.getLogger(ProductAdminService.class);
 
-    private final ProductService productService;
-
     private final ProductRepository productRepository;
+
 
     @Transactional
     public ResponseEntity<?> create(ProductRequest request) {
@@ -53,5 +54,41 @@ public class ProductAdminService {
 
         logger.info("Product added successfully {}", productResponse.toString());
         return new ResponseEntity<>(productResponse, HttpStatus.CREATED);
+    }
+
+
+    @Transactional
+    public ResponseEntity<?> update(ProductRequest request) {
+        if (request == null)
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Product request cannot be null");
+
+        if (request.getId() == null)
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Product request id cannot be null");
+
+        Product product = productRepository.findById(request.getId()).orElseThrow(() ->
+                new ResponseStatusException(HttpStatus.NOT_FOUND, "Product not found"));
+
+        Map<String, Object> changedData = new HashMap<>();
+
+        if (request.getName() != null && !request.getName().isEmpty()) {
+            product.setName(request.getName());
+            changedData.put("name", product.getName());
+        }
+
+        if (request.getDescription() != null && !request.getDescription().isEmpty()) {
+            product.setDescription(request.getDescription());
+            changedData.put("description", product.getDescription());
+        }
+
+        if (changedData.isEmpty()) return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+        Product savedProduct = productRepository.save(product);
+
+        ProductResponse response = ProductResponse.builder()
+                .id(savedProduct.getId())
+                .name(savedProduct.getName())
+                .description(savedProduct.getDescription())
+                .build();
+
+        return new ResponseEntity<>(response, HttpStatus.OK);
     }
 }

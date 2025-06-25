@@ -16,6 +16,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
@@ -48,7 +49,9 @@ public class LotService {
                 new ResponseStatusException(HttpStatus.NOT_FOUND, "Product not found with id: " + request.getProductId()));
 
         List<LotResponse> lotResponses = product.getLots().stream().map(lotUtils::buildResponse).toList();
-
+        if (lotResponses.isEmpty()) {
+            return new ResponseEntity<>(new ArrayList<>(), HttpStatus.NO_CONTENT);
+        }
 
         return ResponseEntity.status(HttpStatus.OK).body(lotResponses);
     }

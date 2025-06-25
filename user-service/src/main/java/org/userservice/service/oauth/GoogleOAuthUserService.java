@@ -15,9 +15,11 @@ import org.springframework.util.StringUtils;
 import org.userservice.model.authinfo.OAuthUserInfo;
 import org.userservice.model.authinfo.OAuthUserInfoFactory;
 import org.userservice.model.authinfo.UserPrincipal;
+import org.userservice.model.entity.Profile;
 import org.userservice.model.entity.User;
 import org.userservice.repository.UserRepository;
 
+import java.time.LocalDateTime;
 import java.util.*;
 
 @Service
@@ -65,8 +67,13 @@ public class GoogleOAuthUserService extends DefaultOAuth2UserService {
         User existingUser;
         if (user.isPresent()) {
             existingUser = user.get();
+            if (existingUser.getProfile() == null) {
+                // Если профиля нет (старые пользователи), создаем дефолтный
+                existingUser.setProfile(createDefaultProfile(existingUser, userInfo));
+            }
+
             if (!existingUser.getAuthProvider().equals(User.AuthProvider.valueOf(userRequest.getClientRegistration().getRegistrationId()))) {
-                logger.error(String.format("User with email '%s' already exists.", existingUser.getEmail()));
+                logger.error("User with email '{}' already exists.", existingUser.getEmail());
                 throw new OAuth2AuthenticationException(new OAuth2Error(OAuth2ErrorCodes.INVALID_REQUEST));
             }
 
@@ -81,7 +88,6 @@ public class GoogleOAuthUserService extends DefaultOAuth2UserService {
     private User updateExistingUser(User user, OAuthUserInfo userInfo) {
         user.setEmail(userInfo.getEmail());
         user.setName(userInfo.getName());
-        user.setImageUrl(userInfo.getImageUrl());
         return userRepository.save(user);
     }
 
@@ -89,14 +95,34 @@ public class GoogleOAuthUserService extends DefaultOAuth2UserService {
         User user = User.builder()
                 .email(userInfo.getEmail())
                 .name(userInfo.getName())
-                .imageUrl(userInfo.getImageUrl())
                 .authProvider(User.AuthProvider.valueOf(userRequest.getClientRegistration().getRegistrationId()))
                 .roles(Set.of(User.Role.USER))
+                .createdAt(LocalDateTime.now())
                 .build();
 
         User savedUser = userRepository.save(user);
-        logger.info("New user registered: {}", savedUser.getEmail());
-        return savedUser;
+
+        Profile defaultProfile = createDefaultProfile(savedUser, userInfo);
+        savedUser.setProfile(defaultProfile);
+
+        logger.info("New user registered with default profile: {}", savedUser.getEmail());
+        return userRepository.save(savedUser);
+    }
+
+
+    private Profile createDefaultProfile(User user, OAuthUserInfo userInfo) {
+        return Profile.builder()
+                .user(user)
+                .bio("") // Пустое поле "О себе"
+                .bannerUrl(null) // Дефолтный баннер можно задать позже
+                .imageUrl(userInfo.getImageUrl())
+                .themeColorHex("#6A4BFF") // Фиолетовый как дефолтный цвет
+                .socialLinks(Map.of()) // Пустые соцсети
+                .unlockedBadges(Set.of("welcome")) // Бейдж "новый пользователь"
+                .customSettings(Map.of(
+                        "layout", "default"
+                ))
+                .build();
     }
 
     @Override

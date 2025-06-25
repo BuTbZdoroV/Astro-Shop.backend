@@ -19,13 +19,18 @@ public final class LotController {
     public ResponseEntity<?> get(
             @RequestParam(required = false) Long id,
             @RequestParam(required = false) String name) {
-        return lotService.get(new LotRequest(id, name, null));
+        return lotService.get(LotRequest.builder()
+                .id(id)
+                .name(name)
+                .build());
     }
 
     @Operation(description = "Поиск всех лотов по productID")
     @GetMapping("/getAll")
     public ResponseEntity<?> getAll(@RequestParam Long productId) {
-        return lotService.getAll(new LotRequest(null, null, productId));
+        return lotService.getAll(LotRequest.builder()
+                .productId(productId)
+                .build());
     }
 
 

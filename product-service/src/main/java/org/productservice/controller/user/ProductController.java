@@ -17,7 +17,10 @@ public final class ProductController {
     @GetMapping("/get")
     public ResponseEntity<?> get(@RequestParam(required = false) Long id,
                                  @RequestParam(required = false) String name) {
-        return productService.get(new ProductRequest(id, name, null));
+        return productService.get(ProductRequest.builder()
+                .id(id)
+                .name(name)
+                .build());
     }
 
     @GetMapping("/getAll")

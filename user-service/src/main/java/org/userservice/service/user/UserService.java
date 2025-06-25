@@ -1,5 +1,6 @@
 package org.userservice.service.user;
 
+import io.swagger.v3.oas.annotations.Operation;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -11,6 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 import org.userservice.model.authinfo.UserPrincipal;
 import org.userservice.model.dto.request.UserRequest;
+import org.userservice.model.dto.response.ProfileResponse;
 import org.userservice.model.dto.response.UserResponse;
 import org.userservice.model.entity.User;
 import org.userservice.repository.UserRepository;
@@ -20,6 +22,8 @@ import org.userservice.service.utils.UserUtils;
 @RequiredArgsConstructor
 public class UserService {
     private final Logger logger = LoggerFactory.getLogger(UserService.class);
+
+    public final ProfileService profileService;
 
     private final UserRepository userRepository;
     private final UserUtils userUtils;
@@ -48,5 +52,36 @@ public class UserService {
 
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
+
+    @Transactional(readOnly = true)
+    public ResponseEntity<?> getFullData(UserRequest userRequest) {
+        if (userRequest == null) throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
+
+        User user = userUtils.findByRequest(userRequest, userRepository);
+        UserResponse response = userUtils.buildFullResponse(user);
+
+        logger.info(response.toString());
+
+        return ResponseEntity.status(HttpStatus.OK).body(response);
+    }
+
+    @Transactional(readOnly = true)
+    public ResponseEntity<?> getBasicData(UserRequest userRequest) {
+        if (userRequest == null) throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
+
+        User user = userUtils.findByRequest(userRequest, userRepository);
+
+        UserResponse response = UserResponse.builder()
+                .id(user.getId())
+                .name(user.getName())
+                .profile(ProfileResponse.builder()
+                        .imageUrl(user.getProfile().getImageUrl())
+                        .build())
+                .build();
+
+        return ResponseEntity.status(HttpStatus.OK).body(response);
+    }
+
+
 
 }

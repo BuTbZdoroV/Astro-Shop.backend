@@ -21,6 +21,7 @@ public class Product {
     private Long id;
     @NotBlank
     private String name;
+    @Column(length = 1000)
     private String description;
 
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)

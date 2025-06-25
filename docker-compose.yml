@@ -9,6 +9,8 @@ services:
     environment:
       ZOOKEEPER_CLIENT_PORT: 2181
       ZOOKEEPER_TICK_TIME: 2000
+    networks:
+      - microservices-net
 
   kafka:
     image: confluentinc/cp-kafka:latest
@@ -25,11 +27,11 @@ services:
       KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
+    networks:
+      - microservices-net
 
   user_service_db:
-    build:
-      context: .
-      dockerfile: Dockerfile
+    image: postgres:13
     container_name: user_service_db
     environment:
       POSTGRES_USER: butbzdorov
@@ -45,12 +47,8 @@ services:
     networks:
       - microservices-net
 
-
-
   product_service_db:
-    build:
-      context: .
-      dockerfile: Dockerfile
+    image: postgres:13
     container_name: product_service_db
     environment:
       POSTGRES_USER: butbzdorov
@@ -66,6 +64,33 @@ services:
     networks:
       - microservices-net
 
+  review_service_db:
+    image: postgres:13
+    container_name: review_service_db
+    environment:
+      POSTGRES_USER: butbzdorov
+      POSTGRES_PASSWORD: 102938asd
+      POSTGRES_DB: review_service_db
+      PGDATA: /var/lib/postgresql/data/pgdata
+    ports:
+      - "5435:5432"
+    volumes:
+      - review_data:/var/lib/postgresql/data
+      - ./init-scripts:/docker-entrypoint-initdb.d
+    restart: unless-stopped
+    networks:
+      - microservices-net
+
+  redis:
+    image: redis:7.0
+    container_name: redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    restart: unless-stopped
+    networks:
+      - microservices-net
 
 networks:
   microservices-net:
@@ -74,3 +99,5 @@ networks:
 volumes:
   user_data: {}
   product_data: {}
+  review_data: {}
+  redis_data: {}

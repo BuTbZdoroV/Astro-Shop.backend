@@ -24,5 +24,10 @@ public final class AuthController {
         authService.logout(request, response);
     }
 
+    @GetMapping("/test")
+    public ResponseEntity<?> test() {
+        return authService.testTilda();
+    }
+
 
 }

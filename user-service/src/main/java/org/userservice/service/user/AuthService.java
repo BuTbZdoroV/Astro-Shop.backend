@@ -83,4 +83,9 @@ public class AuthService {
         }
     }
 
+
+    public ResponseEntity<?> testTilda() {
+        return ResponseEntity.status(HttpStatus.OK).build();
+    }
+
 }

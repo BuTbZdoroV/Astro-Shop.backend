@@ -5,6 +5,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 import org.springframework.web.server.ResponseStatusException;
 import org.userservice.model.dto.request.UserRequest;
+import org.userservice.model.dto.response.ProfileResponse;
 import org.userservice.model.dto.response.UserResponse;
 import org.userservice.model.entity.User;
 import org.userservice.repository.UserRepository;
@@ -39,9 +40,32 @@ public class UserUtils {
                 .id(user.getId())
                 .name(user.getName())
                 .email(user.getEmail())
-                .imageUrl(user.getImageUrl())
                 .authProvider(user.getAuthProvider())
                 .roles(user.getRoles())
+                .createdAt(user.getCreatedAt())
+                .build();
+    }
+
+
+    public UserResponse buildFullResponse(User user) {
+        return UserResponse.builder()
+                .id(user.getId())
+                .name(user.getName())
+                .email(user.getEmail())
+                .roles(user.getRoles())
+                .authProvider(user.getAuthProvider())
+                .createdAt(user.getCreatedAt())
+                .profile(ProfileResponse.builder()
+                        .bio(user.getProfile().getBio())
+                        .userId(user.getId())
+                        .unlockedBadges(user.getProfile().getUnlockedBadges())
+                        .themeColorHex(user.getProfile().getThemeColorHex())
+                        .socialLinks(user.getProfile().getSocialLinks())
+                        .customSettings(user.getProfile().getCustomSettings())
+                        .bannerUrl(user.getProfile().getBannerUrl())
+                        .imageUrl(user.getProfile().getImageUrl())
+                        .id(user.getProfile().getId())
+                        .build())
                 .build();
     }
 

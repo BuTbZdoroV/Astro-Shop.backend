@@ -36,7 +36,6 @@ public class UserPrincipal implements OAuth2User {
                 .id(user.getId())
                 .name(user.getName())
                 .email(user.getEmail())
-                .imageUrl(user.getImageUrl())
                 .attributes(attributes)
                 .authorities(authorities)
                 .authProvider(user.getAuthProvider())

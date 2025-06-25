@@ -1,7 +1,9 @@
 package org.productservice.service.utils;
 
 import org.productservice.model.dto.request.lot.LotRequest;
+import org.productservice.model.dto.request.product.ProductRequest;
 import org.productservice.model.dto.response.lot.LotResponse;
+import org.productservice.model.dto.response.product.ProductResponse;
 import org.productservice.model.entity.Lot;
 import org.productservice.repository.LotRepository;
 import org.springframework.http.HttpStatus;
@@ -33,6 +35,9 @@ public class LotUtils {
                 .id(lot.getId())
                 .name(lot.getName())
                 .attributes(new HashMap<>())
+                .product(ProductResponse.builder()
+                        .id(lot.getProduct().getId())
+                        .build())
                 .build();
     }
 

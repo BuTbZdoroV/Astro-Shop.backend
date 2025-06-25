@@ -42,7 +42,7 @@ public class WebSecurityConfig {
                             String jwt = jwtUtils.generateToken(userPrincipal);
                             response.setHeader("Authorization", "Bearer " + jwt);
 
-                            response.sendRedirect("http://localhost:3000/oauth-callback/?token=" + URLEncoder.encode(jwt, StandardCharsets.UTF_8));
+                            response.sendRedirect("http://localhost:5173/oauth-callback/?token=" + URLEncoder.encode(jwt, StandardCharsets.UTF_8));
                         }))
                 .logout(logout -> logout
                         .logoutUrl("/oauth2/logout")

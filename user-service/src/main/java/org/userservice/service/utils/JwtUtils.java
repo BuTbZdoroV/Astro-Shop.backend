@@ -7,12 +7,14 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.stereotype.Component;
 import org.userservice.model.authinfo.UserPrincipal;
+import org.userservice.model.entity.User;
 
 import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Component
@@ -67,5 +69,15 @@ public class JwtUtils {
                 .getBody();
 
         return claims.getSubject();
+    }
+
+    public Set<User.Role> extractUserRoles(String token) { //todo возможно стоит проверку на id заменить на роли
+        Claims claims = Jwts.parserBuilder()
+                .setSigningKey(secretKey)
+                .build()
+                .parseClaimsJws(token)
+                .getBody();
+
+        return claims.get("roles", Set.class);
     }
 }

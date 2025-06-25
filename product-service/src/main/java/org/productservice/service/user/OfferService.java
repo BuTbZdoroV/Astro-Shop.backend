@@ -173,7 +173,7 @@ public class OfferService {
         List<Offer> offers = offerRepository.findAllByLotId(offerRequest.getLotId());
 
         if (offers.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+            return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
         }
 
         List<OfferResponse> offerResponse = offers.stream().map(offerUtils::buildResponse).toList();

@@ -21,7 +21,9 @@ public class Offer {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     private String name;
+    @Column(length = 100)
     private String shortDescription;
+    @Column(length = 2000)
     private String longDescription;
     private Double price;
     private Date createdAt;

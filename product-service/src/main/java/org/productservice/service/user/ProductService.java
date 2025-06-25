@@ -15,6 +15,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
@@ -28,7 +29,8 @@ public class ProductService {
 
     @Transactional(readOnly = true)
     public ResponseEntity<?> get(ProductRequest request) {
-        if (request == null) throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Product request cannot be null");
+        if (request == null)
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Product request cannot be null");
 
         Optional<Product> productOptional = Optional.empty();
 
@@ -49,8 +51,10 @@ public class ProductService {
 
     @Transactional(readOnly = true)
     public ResponseEntity<?> getAll() {
-        System.out.println("getAll - called");
         List<Product> products = productRepository.findAllWithLots();
+        if (products.isEmpty()) {
+            return new ResponseEntity<>(new ArrayList<>(), HttpStatus.NO_CONTENT);
+        }
         List<ProductResponse> productResponses = products.stream().map(productUtils::buildResponse).toList();
 
         return new ResponseEntity<>(productResponses, HttpStatus.OK);

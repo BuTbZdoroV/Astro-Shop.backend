@@ -1,0 +1,47 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: postgres-review
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: postgres-review
+  template:
+    metadata:
+      labels:
+        app: postgres-review
+    spec:
+      containers:
+        - name: postgres
+          image: postgres:13
+          env:
+            - name: POSTGRES_PRODUCT
+              value: "butbzdorov"
+            - name: POSTGRES_PASSWORD
+              value: "102938asd"
+            - name: POSTGRES_DB
+              value: "review_service_db"
+            - name: PGDATA
+              value: "/var/lib/postgresql/data/pgdata"
+          ports:
+            - containerPort: 5432
+          volumeMounts:
+            - name: postgres-storage
+              mountPath: /var/lib/postgresql/data
+      volumes:
+        - name: postgres-storage
+          persistentVolumeClaim:
+            claimName: postgres-pvc-review
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres-review
+spec:
+  selector:
+    app: postgres-review
+  ports:
+    - port: 5432
+      targetPort: 5432

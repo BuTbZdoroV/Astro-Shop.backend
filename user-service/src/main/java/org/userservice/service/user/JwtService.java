@@ -9,9 +9,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.userservice.model.dto.request.UserRequest;
 import org.userservice.model.dto.response.UserResponse;
+import org.userservice.model.entity.User;
 import org.userservice.service.utils.JwtUtils;
 
 import java.util.Map;
+import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
