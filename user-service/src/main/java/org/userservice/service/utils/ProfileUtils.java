@@ -14,7 +14,7 @@ public class ProfileUtils {
                 .id(profile.getId())
                 .userId(userId)
                 .bio(profile.getBio())
-                .bannerUrl(profile.getBannerUrl())
+                .bannerUrl(profile.getBackgroundUrl())
                 .customSettings(profile.getCustomSettings())
                 .socialLinks(profile.getSocialLinks())
                 .themeColorHex(profile.getThemeColorHex())

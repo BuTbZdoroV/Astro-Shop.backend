@@ -181,6 +181,17 @@ public class OfferService {
         return ResponseEntity.ok(offerResponse);
     }
 
+    @Transactional(readOnly = true)
+    public ResponseEntity<String> getName(Long id) {
+        if (id == null) throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Offer id is null");
+        return new ResponseEntity<>(offerRepository.findNameById(id), HttpStatus.OK);
+    }
+
+    @Transactional(readOnly = true)
+    public ResponseEntity<?> getCountByUserId(Long userId) {
+        return ResponseEntity.ok(offerRepository.countByUserId(userId));
+    }
+
 
     /**
      * Поиск продуктов с динамической фильтрацией и пагинацией.

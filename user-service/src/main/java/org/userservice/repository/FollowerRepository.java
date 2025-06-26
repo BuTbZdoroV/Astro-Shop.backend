@@ -13,50 +13,43 @@ public interface FollowerRepository extends JpaRepository<Follower, FollowerId> 
 
     // ========== Базовые запросы ==========
 
-    // Проверка существования подписки (с использованием ID объектов)
-    @Query("SELECT CASE WHEN COUNT(f) > 0 THEN true ELSE false END " +
-            "FROM Follower f " +
-            "WHERE f.id.follower.id = :followerId AND f.id.followed.id = :followedId")
-    Boolean existsByFollowerIdAndFollowedId(@Param("followerId") Long followerId,
-                                            @Param("followedId") Long followedId);
+    // Проверка существования подписки по ID ключа
+    boolean existsByFollowerIdAndFollowedId(Long followerId, Long followedId);
 
-    // Получение конкретной подписки
-    @Query("SELECT f FROM Follower f " +
-            "WHERE f.id.follower.id = :followerId AND f.id.followed.id = :followedId")
-    Optional<Follower> findByFollowerIdAndFollowedId(@Param("followerId") Long followerId,
-                                                     @Param("followedId") Long followedId);
+    // Поиск по ID ключа
+    Optional<Follower> findByFollowerIdAndFollowedId(Long followerId, Long followedId);
 
     // ========== Подписчики и подписки ==========
 
-    // Список подписчиков пользователя (с пагинацией)
+    // Список подписчиков пользователя
     @Query("SELECT f FROM Follower f " +
-            "JOIN FETCH f.id.follower " +  // JOIN FETCH для избежания N+1
-            "WHERE f.id.followed.id = :userId " +
+            "JOIN FETCH f.follower " +  // Используем связь follower
+            "WHERE f.id.followedId = :userId " +
             "ORDER BY f.createdAt DESC")
-    List<Follower> findFollowersByUserId(@Param("userId") Long userId);
+    List<Follower> findFollowersByFollowedId(@Param("userId") Long userId);
 
-    // Список тех, на кого подписан пользователь (с пагинацией)
+    // Список тех, на кого подписан пользователь
     @Query("SELECT f FROM Follower f " +
-            "JOIN FETCH f.id.followed " +  // JOIN FETCH для избежания N+1
-            "WHERE f.id.follower.id = :userId " +
+            "JOIN FETCH f.followed " +  // Используем связь followed
+            "WHERE f.id.followerId = :userId " +
             "ORDER BY f.createdAt DESC")
     List<Follower> findFollowingByUserId(@Param("userId") Long userId);
 
     // ========== Статистика ==========
 
     // Количество подписчиков
-    @Query("SELECT COUNT(f) FROM Follower f WHERE f.id.followed.id = :userId")
-    Long countFollowers(@Param("userId") Long userId);
+    @Query("SELECT COUNT(f) FROM Follower f WHERE f.id.followedId = :userId")
+    Integer countByFollowedId(@Param("userId") Long userId);
 
     // Количество подписок пользователя
-    @Query("SELECT COUNT(f) FROM Follower f WHERE f.id.follower.id = :userId")
-    Long countFollowing(@Param("userId") Long userId);
+    @Query("SELECT COUNT(f) FROM Follower f WHERE f.id.followerId = :userId")
+    Integer countByFollowerId(@Param("userId") Long userId);
 
     // ========== Дополнительные методы ==========
 
     // Поиск по статусу подписки
     @Query("SELECT f FROM Follower f " +
-            "WHERE f.id.follower.id = :userId AND f.status = :status")
+            "WHERE f.id.followerId = :userId AND f.status = :status")
     List<Follower> findByFollowerIdAndStatus(@Param("userId") Long userId,
                                              @Param("status") Follower.FollowStatus status);
 

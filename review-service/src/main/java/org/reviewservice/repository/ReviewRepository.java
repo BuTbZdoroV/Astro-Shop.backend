@@ -15,4 +15,6 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
     @Query("SELECT AVG(r.rating) as avgRating, COUNT(r.id) as reviewsCount " +
             "FROM Review r WHERE r.sellerId = :sellerId")
     Optional<ReviewStats> getSellerRatingStats(@Param("sellerId") Long sellerId);
+
+    Integer getCountBySellerId(Long sellerId);
 }

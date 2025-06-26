@@ -28,12 +28,19 @@ public class Profile {
     @JoinColumn(name = "user_id", nullable = false, unique = true)
     private User user;
 
+    private Double sellerRating;
+    private Double buyerRating;
+
+    private String country;
+
+    private String info;
+
     @Column(length = 2000)
     private String bio;
 
     private String imageUrl;
 
-    private String bannerUrl;
+    private String backgroundUrl;
 
     @Column(length = 100)
     private String themeColorHex; // Например, "#6A4BFF"

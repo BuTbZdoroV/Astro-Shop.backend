@@ -113,6 +113,9 @@ public class GoogleOAuthUserService extends DefaultOAuth2UserService {
     private Profile createDefaultProfile(User user, OAuthUserInfo userInfo) {
         return Profile.builder()
                 .user(user)
+                .sellerRating(0D)
+                .buyerRating(0D)
+                .info("")
                 .bio("") // Пустое поле "О себе"
                 .bannerUrl(null) // Дефолтный баннер можно задать позже
                 .imageUrl(userInfo.getImageUrl())

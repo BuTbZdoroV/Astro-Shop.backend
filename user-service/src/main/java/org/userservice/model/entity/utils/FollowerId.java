@@ -14,23 +14,11 @@ import java.util.Objects;
 @AllArgsConstructor
 public class FollowerId {
 
-    @Column(name = "follower_id")
-    private Long followerId;  // Тот, кто подписался
+    @Column(name = "follower_id", nullable = false)
+    private Long followerId;
 
-    @Column(name = "followed_id")
-    private Long followedId;  // На кого подписались
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @MapsId("followerId")  // Связывает с полем followerId выше
-    @JoinColumn(name = "follower_id", insertable = false, updatable = false)
-    private User follower;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @MapsId("followedId")  // Связывает с полем followedId выше
-    @JoinColumn(name = "followed_id", insertable = false, updatable = false)
-    private User followed;
-
-
+    @Column(name = "followed_id", nullable = false)
+    private Long followedId;
 
     @Override
     public boolean equals(Object o) {

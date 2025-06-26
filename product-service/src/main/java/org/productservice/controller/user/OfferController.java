@@ -51,6 +51,16 @@ public final class OfferController {
                 .build());
     }
 
+    @GetMapping("/getName")
+    public ResponseEntity<?> getName(@RequestParam Long id) {
+        return offerService.getName(id);
+    }
+
+    @GetMapping("/getCountByUserId")
+    public ResponseEntity<?> getCountByUserId(@RequestParam Long userId) {
+        return offerService.getCountByUserId(userId);
+    }
+
     @PostMapping("/searchAllByUser")
     public ResponseEntity<?> searchAllByUser(@RequestBody @Valid OfferRequest offerRequest,
                                              @PageableDefault(sort = "createdAt", direction = DESC) Pageable pageable,

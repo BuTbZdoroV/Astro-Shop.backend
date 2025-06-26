@@ -96,4 +96,9 @@ public class ReviewService {
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 
+    @Transactional(readOnly = true)
+    public ResponseEntity<?> getCountBySellerId(Long sellerId) {
+        return ResponseEntity.status(HttpStatus.OK).body(reviewRepository.getCountBySellerId(sellerId));
+    }
+
 }

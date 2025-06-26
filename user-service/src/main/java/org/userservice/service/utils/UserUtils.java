@@ -62,7 +62,7 @@ public class UserUtils {
                         .themeColorHex(user.getProfile().getThemeColorHex())
                         .socialLinks(user.getProfile().getSocialLinks())
                         .customSettings(user.getProfile().getCustomSettings())
-                        .bannerUrl(user.getProfile().getBannerUrl())
+                        .bannerUrl(user.getProfile().getBackgroundUrl())
                         .imageUrl(user.getProfile().getImageUrl())
                         .id(user.getProfile().getId())
                         .build())

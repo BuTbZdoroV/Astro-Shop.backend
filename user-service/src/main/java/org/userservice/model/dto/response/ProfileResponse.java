@@ -17,7 +17,10 @@ public class ProfileResponse {
 
     Long id;
     Long userId;
+    Double sellerRating;
+    Double buyerRating;
     String bio;
+    String info;
     String imageUrl;
     String bannerUrl;
     String themeColorHex;

@@ -18,6 +18,14 @@ public class Follower {
     @EmbeddedId
     private FollowerId id;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "follower_id", insertable = false, updatable = false)
+    private User follower;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "followed_id", insertable = false, updatable = false)
+    private User followed;
+
     private LocalDateTime createdAt;
 
     @Enumerated(EnumType.STRING)

@@ -16,7 +16,6 @@ import org.userservice.service.utils.ProfileUtils;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -52,14 +51,29 @@ public class ProfileService {
             profile.setBio(request.getBio());
         }
 
+        if (request.getBuyerRating() != null) {
+            changedData.put("buyerRating", profile.getBuyerRating());
+            profile.setBuyerRating(request.getBuyerRating());
+        }
+
+        if (request.getSellerRating() != null) {
+            changedData.put("sellerRating", profile.getSellerRating());
+            profile.setSellerRating(request.getSellerRating());
+        }
+
+        if (request.getInfo() != null) {
+            changedData.put("info", profile.getInfo());
+            profile.setInfo(request.getInfo());
+        }
+
         if (request.getImageUrl() != null) {
             changedData.put("imageUrl", profile.getImageUrl());
             profile.setImageUrl(request.getImageUrl());
         }
 
         if (request.getBannerUrl() != null) {
-            changedData.put("bannerUrl", profile.getBannerUrl());
-            profile.setBannerUrl(request.getBannerUrl());
+            changedData.put("bannerUrl", profile.getBackgroundUrl());
+            profile.setBackgroundUrl(request.getBannerUrl());
         }
 
         if (request.getCustomSettings() != null) {
