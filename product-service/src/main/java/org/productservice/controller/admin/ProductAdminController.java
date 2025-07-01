@@ -21,4 +21,9 @@ public class ProductAdminController {
     public ResponseEntity<?> update(@RequestBody ProductRequest request) {
         return productAdminService.update(request);
     }
+
+    @DeleteMapping("/delete")
+    public ResponseEntity<?> delete(@RequestBody ProductRequest request) {
+        return productAdminService.delete(request);
+    }
 }

@@ -6,6 +6,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.userservice.model.entity.User;
 
+import java.time.LocalDateTime;
 import java.util.Set;
 
 @Data
@@ -17,6 +18,7 @@ public class UserRequest {
     private String name;
     private String email;
     private Set<User.Role> role;
+    private ProfileRequest profile;
 
     public UserRequest(Long id, String name, String email) {
         this.id = id;

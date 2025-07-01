@@ -17,8 +17,10 @@ import java.util.Optional;
 public class UserUtils {
 
     public User findByRequest(UserRequest userRequest, UserRepository userRepository) {
-        if (userRequest == null) throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "userRequest cannot be null");
-        if (userRepository == null) throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "userRepository cannot be null");
+        if (userRequest == null)
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "userRequest cannot be null");
+        if (userRepository == null)
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "userRepository cannot be null");
 
         Optional<User> userOptional = Optional.empty();
 
@@ -56,15 +58,25 @@ public class UserUtils {
                 .authProvider(user.getAuthProvider())
                 .createdAt(user.getCreatedAt())
                 .profile(ProfileResponse.builder()
-                        .bio(user.getProfile().getBio())
                         .userId(user.getId())
+                        .info(user.getProfile().getInfo())
                         .unlockedBadges(user.getProfile().getUnlockedBadges())
-                        .themeColorHex(user.getProfile().getThemeColorHex())
                         .socialLinks(user.getProfile().getSocialLinks())
                         .customSettings(user.getProfile().getCustomSettings())
-                        .bannerUrl(user.getProfile().getBackgroundUrl())
+                        .backgroundUrl(user.getProfile().getBackgroundUrl())
                         .imageUrl(user.getProfile().getImageUrl())
                         .id(user.getProfile().getId())
+                        .build())
+                .build();
+    }
+
+    public UserResponse buildBasicResponse(User user) {
+        return UserResponse.builder()
+                .id(user.getId())
+                .name(user.getName())
+                .createdAt(user.getCreatedAt())
+                .profile(ProfileResponse.builder()
+                        .imageUrl(user.getProfile().getImageUrl())
                         .build())
                 .build();
     }

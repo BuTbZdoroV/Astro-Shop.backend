@@ -24,6 +24,7 @@ public class ProductAdminService {
     private final Logger logger = LoggerFactory.getLogger(ProductAdminService.class);
 
     private final ProductRepository productRepository;
+    private final ProductUtils productUtils;
 
 
     @Transactional
@@ -41,6 +42,7 @@ public class ProductAdminService {
         Product product = Product.builder()
                 .name(request.getName())
                 .description(request.getDescription())
+                .attributes(request.getAttributes())
                 .build();
 
         Product savedProduct = productRepository.save(product);
@@ -49,7 +51,7 @@ public class ProductAdminService {
                 .id(savedProduct.getId())
                 .name(savedProduct.getName())
                 .description(savedProduct.getDescription())
-                .attributes(new HashMap<>())
+                .attributes(savedProduct.getAttributes())
                 .build();
 
         logger.info("Product added successfully {}", productResponse.toString());
@@ -80,6 +82,11 @@ public class ProductAdminService {
             changedData.put("description", product.getDescription());
         }
 
+        if (request.getAttributes() != null) {
+            product.setAttributes(request.getAttributes());
+            changedData.put("attributes", product.getAttributes());
+        }
+
         if (changedData.isEmpty()) return new ResponseEntity<>(HttpStatus.NO_CONTENT);
         Product savedProduct = productRepository.save(product);
 
@@ -87,8 +94,20 @@ public class ProductAdminService {
                 .id(savedProduct.getId())
                 .name(savedProduct.getName())
                 .description(savedProduct.getDescription())
+                .attributes(savedProduct.getAttributes())
                 .build();
 
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
+
+    @Transactional
+    public ResponseEntity<?> delete(ProductRequest request) {
+        if (request == null) throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Product request cannot be null");
+
+        Product product = productUtils.findByRequest(request, productRepository);
+        productRepository.delete(product);
+
+        return ResponseEntity.ok().build();
+    }
+
 }

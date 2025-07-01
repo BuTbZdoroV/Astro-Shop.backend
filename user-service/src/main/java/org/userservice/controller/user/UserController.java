@@ -40,13 +40,23 @@ public final class UserController {
         return userService.getFullData(new UserRequest(id, name, email));
     }
 
-    @Operation(description = "Все необходимое для легкого отображения на странице: id, name, profile.imageUrl")
+    @Operation(description = "Все необходимое для легкого отображения на странице: id, name, createdAt, profile.imageUrl")
     @GetMapping("/getBasicData")
     public ResponseEntity<?> getBasicData(
             @RequestParam(required = false) Long id,
             @RequestParam(required = false) String name,
             @RequestParam(required = false) String email) {
         return userService.getBasicData(new UserRequest(id, name, email));
+    }
+
+    @GetMapping("/getTopByBuyerRating")
+    public ResponseEntity<?> getTopByBuyerRating(@RequestParam Integer limit) {
+        return userService.getTopByBuyerRating(limit);
+    }
+
+    @GetMapping("/getCountAll")
+    public ResponseEntity<Long> getCountAll() {
+        return userService.getCountAll();
     }
 
     /**

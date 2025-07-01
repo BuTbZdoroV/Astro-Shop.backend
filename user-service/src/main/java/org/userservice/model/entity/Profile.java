@@ -33,17 +33,12 @@ public class Profile {
 
     private String country;
 
-    private String info;
-
     @Column(length = 2000)
-    private String bio;
+    private String info;
 
     private String imageUrl;
 
     private String backgroundUrl;
-
-    @Column(length = 100)
-    private String themeColorHex; // Например, "#6A4BFF"
 
     @Type(JsonBinaryType.class)
     @Column(columnDefinition = "jsonb")

@@ -2,10 +2,13 @@ package org.productservice.service.user;
 
 import lombok.RequiredArgsConstructor;
 import org.productservice.model.dto.request.offer.OfferRequest;
+import org.productservice.model.dto.response.lot.LotResponse;
 import org.productservice.model.dto.response.offer.OfferResponse;
+import org.productservice.model.dto.response.product.ProductResponse;
 import org.productservice.model.dto.specification.offer.OfferSpecifications;
 import org.productservice.model.entity.Lot;
 import org.productservice.model.entity.Offer;
+import org.productservice.model.entity.Product;
 import org.productservice.repository.LotRepository;
 import org.productservice.repository.OfferRepository;
 import org.productservice.service.utils.OfferUtils;
@@ -14,17 +17,16 @@ import org.slf4j.LoggerFactory;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.server.ResponseStatusException;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @Service
 @RequiredArgsConstructor
@@ -33,8 +35,9 @@ public class OfferService {
 
     private final OfferRepository offerRepository;
     private final LotRepository lotRepository;
-
     private final OfferUtils offerUtils;
+
+    private final KafkaTemplate<String, String> kafkaTemplate;
 
     @Transactional
     public ResponseEntity<?> create(OfferRequest offerRequest, Long userId) {
@@ -52,6 +55,8 @@ public class OfferService {
             return new ResponseStatusException(HttpStatus.NOT_FOUND, "Lot not found");
         });
 
+        Product product = lot.getProduct();
+
         Offer offer = Offer.builder()
                 .name(offerRequest.getName())
                 .price(offerRequest.getPrice())
@@ -60,8 +65,9 @@ public class OfferService {
                 .createdAt(new Date())
                 .lot(lot)
                 .availability(offerRequest.getAvailability())
-                .attributes(offerRequest.getAttributes())
+                .attributes(offerUtils.validateAttributes(offerRequest.getAttributes(), product))
                 .userId(userId)
+                .pictureUrl(offerRequest.getPictureUrl())
                 .active(true)
                 .build();
 
@@ -81,13 +87,17 @@ public class OfferService {
      * @throws ResponseStatusException HTTP 204 Если офер не найден
      */
     @Transactional
-    public ResponseEntity<?> update(OfferRequest offerRequest) {
+    public ResponseEntity<?> update(OfferRequest offerRequest, Long userId) {
         if (offerRequest == null) throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "OfferRequest is null");
         if (offerRequest.getId() == null)
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "OfferRequest id is null");
 
         Offer offer = offerRepository.findById(offerRequest.getId()).orElseThrow(() ->
                 new ResponseStatusException(HttpStatus.NOT_FOUND, "Offer not found for ID: " + offerRequest.getId()));
+
+        if (!Objects.equals(offer.getUserId(), userId)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "User id mismatch");
+        }
 
         Map<String, Object> changedData = new HashMap<>();
 
@@ -104,6 +114,7 @@ public class OfferService {
             changedData.put("longDescription", offerRequest.getLongDescription());
         }
         if (offerRequest.getAttributes() != null) {
+            if (offer.getAttributes() == null) offer.setAttributes(new HashMap<>());
             offer.getAttributes().putAll(offerRequest.getAttributes());
             changedData.put("attributes", offer.getAttributes());
         }
@@ -118,6 +129,10 @@ public class OfferService {
         if (offerRequest.getActive() != null) {
             offer.setActive(offerRequest.getActive());
             changedData.put("active", offerRequest.getActive());
+        }
+        if (offerRequest.getPictureUrl() != null) {
+            offer.setPictureUrl(offerRequest.getPictureUrl());
+            changedData.put("pictureUrl", offerRequest.getPictureUrl());
         }
 
         if (changedData.isEmpty()) {
@@ -149,6 +164,8 @@ public class OfferService {
         }
 
         offerRepository.delete(offer);
+
+        kafkaTemplate.send("offer.delete", offer.getId().toString());
         return new ResponseEntity<>("Offer delete by ID: " + offerRequest.getId(), HttpStatus.OK);
     }
 
@@ -161,6 +178,37 @@ public class OfferService {
                 new ResponseStatusException(HttpStatus.NOT_FOUND, "Offer not found for ID: " + offerRequest.getId()));
 
         OfferResponse offerResponse = offerUtils.buildResponse(offer);
+        return ResponseEntity.status(HttpStatus.OK).body(offerResponse);
+    }
+
+    @Transactional(readOnly = true)
+    public ResponseEntity<?> getWithProduct(OfferRequest offerRequest) {
+        if (offerRequest == null) throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "OfferRequest is null");
+        if (offerRequest.getId() == null) throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Offer id is null");
+
+        Offer offer = offerRepository.findById(offerRequest.getId()).orElseThrow(() ->
+                new ResponseStatusException(HttpStatus.NOT_FOUND, "Offer not found for ID: " + offerRequest.getId()));
+
+        OfferResponse offerResponse = OfferResponse.builder()
+                .id(offer.getId())
+                .name(offerRequest.getName())
+                .shortDescription(offerRequest.getShortDescription())
+                .longDescription(offerRequest.getLongDescription())
+                .price(offerRequest.getPrice())
+                .availability(offerRequest.getAvailability())
+                .active(offerRequest.getActive())
+                .pictureUrl(offerRequest.getPictureUrl())
+                .userId(offerRequest.getUserId())
+                .lot(LotResponse.builder()
+                        .id(offer.getLot().getId())
+                        .product(ProductResponse.builder()
+                                .id(offer.getLot().getProduct().getId())
+                                .name(offer.getLot().getProduct().getName())
+                                .description(offer.getLot().getProduct().getDescription())
+                                .attributes(offer.getLot().getProduct().getAttributes())
+                                .build())
+                        .build())
+                .build();
         return ResponseEntity.status(HttpStatus.OK).body(offerResponse);
     }
 
@@ -182,6 +230,11 @@ public class OfferService {
     }
 
     @Transactional(readOnly = true)
+    public ResponseEntity<Long> getCountAll (){
+        return ResponseEntity.ok(offerRepository.count());
+    }
+
+    @Transactional(readOnly = true)
     public ResponseEntity<String> getName(Long id) {
         if (id == null) throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Offer id is null");
         return new ResponseEntity<>(offerRepository.findNameById(id), HttpStatus.OK);
@@ -190,6 +243,11 @@ public class OfferService {
     @Transactional(readOnly = true)
     public ResponseEntity<?> getCountByUserId(Long userId) {
         return ResponseEntity.ok(offerRepository.countByUserId(userId));
+    }
+
+    @Transactional(readOnly = true)
+    public ResponseEntity<?> getCountByUserIdAndActiveTrue(Long userId) {
+        return ResponseEntity.ok(offerRepository.countByUserIdAndActiveTrue(userId));
     }
 
 
@@ -240,5 +298,11 @@ public class OfferService {
         }
 
         return ResponseEntity.ok(responsePage);
+    }
+
+
+    @Transactional(readOnly = true)
+    public ResponseEntity<Boolean> checkOfferExists(Long offerId) {
+        return ResponseEntity.ok(offerRepository.existsById(offerId));
     }
 }

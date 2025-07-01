@@ -30,4 +30,15 @@ public class OfferAdminService {
         return ResponseEntity.ok("Offer with id" + offerRequest.getId() + " deleted successfully");
     }
 
+    @Transactional
+    public ResponseEntity<?> clearAttributes(OfferRequest offerRequest) {
+        if (offerRequest == null) throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Request must not be null");
+
+        Offer offer = offerUtils.findByRequest(offerRequest, offerRepository);
+        offer.setAttributes(null);
+        offerRepository.save(offer);
+
+        return ResponseEntity.ok("Offer attributes with id" + offerRequest.getId() + " cleared successfully");
+    }
+
 }

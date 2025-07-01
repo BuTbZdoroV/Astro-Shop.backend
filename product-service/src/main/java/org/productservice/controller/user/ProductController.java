@@ -23,6 +23,11 @@ public final class ProductController {
                 .build());
     }
 
+    @GetMapping("/getByOfferId")
+    public ResponseEntity<?> getByOfferId(@RequestParam Long offerId) {
+        return productService.getByOfferId(offerId);
+    }
+
     @GetMapping("/getAll")
     public ResponseEntity<?> getAll() {
         return productService.getAll();

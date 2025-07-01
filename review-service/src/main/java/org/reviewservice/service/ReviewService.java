@@ -8,10 +8,14 @@ import org.reviewservice.model.dto.response.ReviewResponse;
 import org.reviewservice.model.entity.Review;
 import org.reviewservice.repository.ReviewRepository;
 import org.reviewservice.service.utils.ReviewUtils;
+import org.reviewservice.service.utils.specification.ReviewSpecifications;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -29,9 +33,10 @@ public class ReviewService {
     private final ReviewRepository reviewRepository;
 
     private final ReviewUtils reviewUtils;
+    private final ReviewSpecifications reviewSpecifications;
 
     @Transactional
-    @CacheEvict(value = {"sellerStats", "allBySellerId"}, key = "#request.sellerId")
+    @CacheEvict(value = {"sellerStats", "allBySellerId", "allByOfferId"}, key = "#request.sellerId")
     public ResponseEntity<?> create(ReviewRequest request) {
         if (request == null) throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
         if (request.getOfferId() == null)
@@ -81,16 +86,28 @@ public class ReviewService {
     }
 
     @Transactional(readOnly = true)
-    @Cacheable(value = "allBySellerId", key = "#request.sellerId")
-    public ResponseEntity<?> getAllBySellerId(ReviewRequest request) {
+    public ResponseEntity<?> searchAllBySellerId(ReviewRequest request, Pageable pageable) {
         if (request == null) throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
-        if (request.getSellerId() == null)
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "sellerId is required");
+        if (request.getSellerId() == null) throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "sellerId is required");
 
-        List<Review> reviews = reviewRepository.findAllBySellerId(request.getSellerId());
+        Specification<Review> specification = reviewSpecifications.hasSellerId(request.getSellerId());
+        Page<Review> reviews = reviewRepository.findAll(specification, pageable);
 
         if (reviews.isEmpty()) return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+        Page<ReviewResponse> response = reviews.map(reviewUtils::buildResponse);
 
+        return ResponseEntity.status(HttpStatus.OK).body(response);
+    }
+
+    @Transactional(readOnly = true)
+    @Cacheable(value = "allByOfferId", key = "#request.offerId")
+    public ResponseEntity<?> getAllByOfferId(ReviewRequest request) {
+        if (request == null) throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
+        if (request.getOfferId() == null) throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "offerId is required");
+
+        List<Review> reviews = reviewRepository.findAllByOfferId(request.getOfferId());
+
+        if (reviews.isEmpty()) return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
         List<ReviewResponse> response = reviews.stream().map(reviewUtils::buildResponse).toList();
 
         return ResponseEntity.status(HttpStatus.OK).body(response);

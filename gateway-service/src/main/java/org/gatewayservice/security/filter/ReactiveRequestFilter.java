@@ -40,14 +40,15 @@ public class ReactiveRequestFilter implements GlobalFilter {
                 .header("Authorization", token)
                 .retrieve()
                 .bodyToMono(UserResponse.class)
-                .flatMap(userInfo -> processUserInfo(exchange, chain, userInfo))
+                .flatMap(userInfo -> processUserInfo(exchange, chain, userInfo, token))
                 .onErrorResume(e -> handleValidationError(exchange, e));
     }
 
     private Mono<Void> processUserInfo(ServerWebExchange exchange,
                                        GatewayFilterChain chain,
-                                       UserResponse userInfo) {
-        ServerWebExchange modifiedExchange = addUserHeaders(exchange, userInfo);
+                                       UserResponse userInfo,
+                                       String token) {
+        ServerWebExchange modifiedExchange = addUserHeaders(exchange, userInfo, token);
 
         if (isAnonymousUser(userInfo)) {
             return chain.filter(modifiedExchange);
@@ -61,7 +62,7 @@ public class ReactiveRequestFilter implements GlobalFilter {
         return chain.filter(modifiedExchange);
     }
 
-    private ServerWebExchange addUserHeaders(ServerWebExchange exchange, UserResponse userInfo) {
+    private ServerWebExchange addUserHeaders(ServerWebExchange exchange, UserResponse userInfo, String token) {
         return exchange.mutate()
                 .request(builder -> {
                     builder.header("X-User-Id", userInfo.getId().toString());
@@ -83,7 +84,8 @@ public class ReactiveRequestFilter implements GlobalFilter {
         return path.startsWith("/api/auth/")
                 || path.startsWith("/api/jwt/")
                 || path.startsWith("/login")
-                || path.startsWith("/oauth2/");
+                || path.startsWith("/oauth2/")
+                || path.startsWith(("/api/media"));
     }
 
     private boolean isAdminEndpoint(String path) {

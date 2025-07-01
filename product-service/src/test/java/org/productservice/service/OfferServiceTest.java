@@ -39,8 +39,9 @@ class OfferServiceTest {
     private static final String ON_EXISTS_OFFER_NAME = "ON_EXISTS_OFFER";
     private static final String NON_EXISTS_OFFER_NAME = "NON_EXISTS_OFFER_NAME";
     private static final String NEW_NAME_FOR_OFFER = "NEW_NAME_FOR_OFFER";
-    public static final double NEW_PRICE_FOR_OFFER = 100D;
-    public static final long ON_EXISTS_USER_ID = 999L;
+    public static final Double NEW_PRICE_FOR_OFFER = 100D;
+    public static final Long ON_EXISTS_USER_ID = 999L;
+    private static final Long NON_EXISTS_USER_ID = 998L;
     private static Long ON_EXISTS_LOT_ID;
     private static Long ON_EXISTS_OFFER_ID;
     private static final Long NON_EXISTS_OFFER_ID = ON_EXISTS_USER_ID;
@@ -192,7 +193,7 @@ class OfferServiceTest {
         offerRequest.setShortDescription("short description");
         offerRequest.setAttributes(newAttributes);
 
-        ResponseEntity<OfferResponse> response = (ResponseEntity<OfferResponse>) offerService.update(offerRequest);
+        ResponseEntity<OfferResponse> response = (ResponseEntity<OfferResponse>) offerService.update(offerRequest, ON_EXISTS_USER_ID);
         assertThat(response).isNotNull();
         assertThat(response.getBody()).isNotNull();
         assertThat(response.getBody().getId()).isNotNull();
@@ -208,7 +209,7 @@ class OfferServiceTest {
         offerRequest = new OfferRequest();
         offerRequest.setId(ON_EXISTS_OFFER_ID);
 
-        response = (ResponseEntity<OfferResponse>) offerService.update(offerRequest);
+        response = (ResponseEntity<OfferResponse>) offerService.update(offerRequest, ON_EXISTS_USER_ID);
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_MODIFIED);
 
     }
@@ -216,17 +217,17 @@ class OfferServiceTest {
     @Test
     @Transactional
     void testUpdate_OfferRequestIsNotValid() {
-        assertThatThrownBy(() -> offerService.update(null)).isInstanceOf(ResponseStatusException.class);
+        assertThatThrownBy(() -> offerService.update(null, NON_EXISTS_USER_ID)).isInstanceOf(ResponseStatusException.class);
 
         OfferRequest offerRequest = new OfferRequest();
         offerRequest.setId(null);
         OfferRequest finalOfferRequest = offerRequest;
-        assertThatThrownBy(() -> offerService.update(finalOfferRequest)).isInstanceOf(ResponseStatusException.class);
+        assertThatThrownBy(() -> offerService.update(finalOfferRequest, ON_EXISTS_USER_ID)).isInstanceOf(ResponseStatusException.class);
 
         offerRequest = new OfferRequest();
         offerRequest.setId(NON_EXISTS_OFFER_ID);
         OfferRequest finalOfferRequest1 = offerRequest;
-        assertThatThrownBy(() -> offerService.update(finalOfferRequest1)).isInstanceOf(ResponseStatusException.class);
+        assertThatThrownBy(() -> offerService.update(finalOfferRequest1, ON_EXISTS_USER_ID)).isInstanceOf(ResponseStatusException.class);
     }
 
     @Test
@@ -291,7 +292,7 @@ class OfferServiceTest {
         ResponseEntity<List<OfferResponse>> response = (ResponseEntity<List<OfferResponse>>) offerService.getAll(finalOfferRequest1);
         assertThat(response).isNotNull();
         assertThat(response.getBody()).isNull();
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NO_CONTENT);
     }
 
     @Test

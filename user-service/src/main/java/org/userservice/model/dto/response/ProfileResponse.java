@@ -4,7 +4,6 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.userservice.model.entity.Profile;
 
 import java.util.Map;
 import java.util.Set;
@@ -19,11 +18,9 @@ public class ProfileResponse {
     Long userId;
     Double sellerRating;
     Double buyerRating;
-    String bio;
     String info;
     String imageUrl;
-    String bannerUrl;
-    String themeColorHex;
+    String backgroundUrl;
     Map<String, String> socialLinks;
     Set<String> unlockedBadges;
     Map<String, Object> customSettings;

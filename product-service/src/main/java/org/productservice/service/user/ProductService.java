@@ -4,7 +4,9 @@ import lombok.RequiredArgsConstructor;
 import org.productservice.model.dto.request.product.ProductRequest;
 import org.productservice.model.dto.response.lot.LotResponse;
 import org.productservice.model.dto.response.product.ProductResponse;
+import org.productservice.model.entity.Offer;
 import org.productservice.model.entity.Product;
+import org.productservice.repository.OfferRepository;
 import org.productservice.repository.ProductRepository;
 import org.productservice.service.utils.ProductUtils;
 import org.slf4j.Logger;
@@ -25,6 +27,7 @@ import java.util.Optional;
 public class ProductService {
     private final Logger logger = LoggerFactory.getLogger(ProductService.class);
     private final ProductRepository productRepository;
+    private final OfferRepository offerRepository;
     private final ProductUtils productUtils;
 
     @Transactional(readOnly = true)
@@ -44,6 +47,19 @@ public class ProductService {
         Product product = productOptional.orElseThrow(() ->
                 new ResponseStatusException(HttpStatus.NOT_FOUND, "Product not found with name: " + request.getName()));
 
+        ProductResponse response = productUtils.buildResponse(product);
+
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
+
+    @Transactional(readOnly = true)
+    public ResponseEntity<?> getByOfferId(Long offerId) {
+        if (offerId == null || offerId < 0) throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Offer id cannot be null");
+
+        Offer offer = offerRepository.findById(offerId).orElseThrow(() ->
+                new ResponseStatusException(HttpStatus.NOT_FOUND, "Offer not found with id: " + offerId));
+
+        Product product = offer.getLot().getProduct();
         ProductResponse response = productUtils.buildResponse(product);
 
         return new ResponseEntity<>(response, HttpStatus.OK);

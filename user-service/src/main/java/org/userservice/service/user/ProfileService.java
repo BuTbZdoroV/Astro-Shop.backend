@@ -9,9 +9,13 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 import org.userservice.model.dto.request.ProfileRequest;
+import org.userservice.model.dto.request.UserRequest;
 import org.userservice.model.dto.response.ProfileResponse;
+import org.userservice.model.dto.response.UserResponse;
 import org.userservice.model.entity.Profile;
+import org.userservice.model.entity.User;
 import org.userservice.repository.ProfileRepository;
+import org.userservice.repository.UserRepository;
 import org.userservice.service.utils.ProfileUtils;
 
 import java.util.HashMap;
@@ -23,6 +27,7 @@ public class ProfileService {
     private final Logger logger = LoggerFactory.getLogger(ProfileService.class);
 
     private final ProfileRepository profileRepository;
+    private final UserRepository userRepository;
     private final ProfileUtils profileUtils;
 
     @Transactional(readOnly = true)
@@ -38,65 +43,52 @@ public class ProfileService {
     }
 
     @Transactional
-    public ResponseEntity<?> update(ProfileRequest request) {
+    public ResponseEntity<?> update(UserRequest request) {
         if (request == null) throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "request is null");
 
-        Profile profile = profileRepository.findByUserId(request.getUserId()).orElseThrow(() ->
-                new ResponseStatusException(HttpStatus.NOT_FOUND, "Profile not found with userId: " + request.getUserId()));
+        User user = userRepository.findById(request.getId()).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found with userId: " + request.getId()));
+        Profile profile = user.getProfile();
 
         Map<String, Object> changedData = new HashMap<>();
 
-        if (request.getBio() != null) {
-            changedData.put("bio", profile.getBio());
-            profile.setBio(request.getBio());
+        if (request.getName() != null) {
+            changedData.put("name", request.getName());
+            user.setName(request.getName());
         }
 
-        if (request.getBuyerRating() != null) {
-            changedData.put("buyerRating", profile.getBuyerRating());
-            profile.setBuyerRating(request.getBuyerRating());
+        if (request.getProfile().getInfo() != null) {
+            changedData.put("info", request.getProfile().getInfo());
+            profile.setInfo(request.getProfile().getInfo());
         }
 
-        if (request.getSellerRating() != null) {
-            changedData.put("sellerRating", profile.getSellerRating());
-            profile.setSellerRating(request.getSellerRating());
+        if (request.getProfile().getImageUrl() != null) {
+            changedData.put("imageUrl", request.getProfile().getImageUrl());
+            profile.setImageUrl(request.getProfile().getImageUrl());
         }
 
-        if (request.getInfo() != null) {
-            changedData.put("info", profile.getInfo());
-            profile.setInfo(request.getInfo());
+        if (request.getProfile().getBackgroundUrl() != null) {
+            changedData.put("backgroundUrl", request.getProfile().getBackgroundUrl());
+            profile.setBackgroundUrl(request.getProfile().getBackgroundUrl());
         }
 
-        if (request.getImageUrl() != null) {
-            changedData.put("imageUrl", profile.getImageUrl());
-            profile.setImageUrl(request.getImageUrl());
+        if (request.getProfile().getCustomSettings() != null) {
+            changedData.put("customSettings", request.getProfile().getCustomSettings());
+            profile.setCustomSettings(request.getProfile().getCustomSettings());
         }
 
-        if (request.getBannerUrl() != null) {
-            changedData.put("bannerUrl", profile.getBackgroundUrl());
-            profile.setBackgroundUrl(request.getBannerUrl());
-        }
-
-        if (request.getCustomSettings() != null) {
-            changedData.put("customSettings", profile.getCustomSettings());
-            profile.setCustomSettings(profile.getCustomSettings());
-        }
-
-        if (request.getSocialLinks() != null) {
-            changedData.put("socialLinks", profile.getSocialLinks());
-            profile.setSocialLinks(profile.getSocialLinks());
-        }
-
-        if (request.getUnlockedBadges() != null) {
-            changedData.put("unlockedBadges", profile.getUnlockedBadges());
-            profile.setUnlockedBadges(profile.getUnlockedBadges());
+        if (request.getProfile().getSocialLinks() != null) {
+            changedData.put("socialLinks", request.getProfile().getSocialLinks());
+            profile.setSocialLinks(request.getProfile().getSocialLinks());
         }
 
         if (changedData.isEmpty()) return new ResponseEntity<>(HttpStatus.NO_CONTENT);
 
-        Profile updatedProfile = profileRepository.save(profile);
-        ProfileResponse profileResponse = profileUtils.buildResponse(updatedProfile, request.getUserId());
+        logger.info(changedData.toString());
 
-        return new ResponseEntity<>(profileResponse, HttpStatus.OK);
+        User savedUser = userRepository.save(user);
+        UserResponse userResponse = profileUtils.buildFullResponse(savedUser);
+
+        return new ResponseEntity<>(userResponse, HttpStatus.OK);
     }
 
 

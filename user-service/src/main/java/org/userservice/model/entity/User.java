@@ -2,17 +2,18 @@ package org.userservice.model.entity;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.experimental.SuperBuilder;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.Set;
 
 @Entity(name = "users")
 @Table(name = "users")
 @Data
-@SuperBuilder
+@Builder
 @AllArgsConstructor
 @NoArgsConstructor
 public class User {
@@ -33,8 +34,12 @@ public class User {
     private Set<Role> roles;
     private LocalDateTime createdAt;
 
+    private Boolean isOnline;
+    private Instant lastSeenAt;
+
     @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private Profile profile;
+
 
     public enum AuthProvider {
         anonymous,

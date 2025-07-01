@@ -32,7 +32,7 @@ public final class OfferController {
     @PatchMapping("/update")
     public ResponseEntity<?> update(@RequestBody OfferRequest offerRequest, @RequestHeader("X-User-Id") Long userId) {
         if (userId == null || userId == -1) throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "UserId is null");
-        return offerService.update(offerRequest);
+        return offerService.update(offerRequest, userId);
     }
 
     @GetMapping("/get")
@@ -51,6 +51,19 @@ public final class OfferController {
                 .build());
     }
 
+    @Operation(summary = "Get offer with product details")
+    @GetMapping("/getWithProduct")
+    public ResponseEntity<?> getWithProduct(@RequestParam Long offerId) {
+        return offerService.getWithProduct(OfferRequest.builder()
+                .id(offerId)
+                .build());
+    }
+
+    @GetMapping("/getCountAll")
+    public ResponseEntity<Long> getCountAll() {
+        return offerService.getCountAll();
+    }
+
     @GetMapping("/getName")
     public ResponseEntity<?> getName(@RequestParam Long id) {
         return offerService.getName(id);
@@ -59,6 +72,11 @@ public final class OfferController {
     @GetMapping("/getCountByUserId")
     public ResponseEntity<?> getCountByUserId(@RequestParam Long userId) {
         return offerService.getCountByUserId(userId);
+    }
+
+    @GetMapping("/getCountByUserIdAndActiveTrue")
+    public ResponseEntity<?> getCountByUserIdAndActiveTrue(@RequestParam Long userId) {
+        return offerService.getCountByUserIdAndActiveTrue(userId);
     }
 
     @PostMapping("/searchAllByUser")
@@ -83,4 +101,8 @@ public final class OfferController {
         return offerService.delete(offerRequest, userId);
     }
 
+    @GetMapping("/{offerId}/exists")
+    public ResponseEntity<Boolean> checkOfferExists(@PathVariable Long offerId) {
+        return offerService.checkOfferExists(offerId);
+    }
 }

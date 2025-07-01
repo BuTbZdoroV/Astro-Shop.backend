@@ -11,7 +11,7 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.logout.SecurityContextLogoutHandler;
 import org.userservice.model.authinfo.UserPrincipal;
 import org.userservice.service.utils.JwtUtils;
-import org.userservice.service.oauth.GoogleOAuthUserService;
+import org.userservice.service.user.oauth.GoogleOAuthUserService;
 
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;

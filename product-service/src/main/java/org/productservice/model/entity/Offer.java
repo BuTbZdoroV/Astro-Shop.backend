@@ -30,6 +30,8 @@ public class Offer {
     private Boolean active;
     private Integer availability;
 
+    private String pictureUrl;
+
     @Column(nullable = false)
     private Long userId;
 

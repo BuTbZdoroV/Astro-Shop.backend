@@ -5,10 +5,7 @@ import lombok.RequiredArgsConstructor;
 import org.productservice.model.dto.request.offer.OfferRequest;
 import org.productservice.service.admin.OfferAdminService;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequiredArgsConstructor
@@ -19,6 +16,11 @@ public class OfferAdminController {
     @DeleteMapping("/delete")
     public ResponseEntity<?> delete(@RequestBody OfferRequest offerRequest) {
         return offerAdminService.delete(offerRequest);
+    }
+
+    @PatchMapping("/clearAttributes")
+    public ResponseEntity<?> clearAttributes(@RequestBody OfferRequest offerRequest) {
+        return offerAdminService.clearAttributes(offerRequest);
     }
 
 }

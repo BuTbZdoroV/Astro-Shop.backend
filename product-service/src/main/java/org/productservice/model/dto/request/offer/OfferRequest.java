@@ -28,6 +28,7 @@ public class OfferRequest {
        Long userId;
        Double price;
        Integer availability;
+       String pictureUrl;
        Boolean active;
        Map<String, Object> attributes;
 

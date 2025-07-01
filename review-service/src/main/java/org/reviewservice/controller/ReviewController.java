@@ -1,10 +1,12 @@
 package org.reviewservice.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.reviewservice.model.dto.request.ReviewRequest;
 import org.reviewservice.service.ReviewService;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -28,12 +30,19 @@ public class ReviewController {
                 .build());
     }
 
-    @GetMapping("/getAllBySellerId")
-    public ResponseEntity<?> getAllBySellerId(@RequestParam Long sellerId) {
-        return reviewService.getAllBySellerId(ReviewRequest.builder()
-                .sellerId(sellerId)
-                .build());
+    @PostMapping("/searchAllBySellerId")
+    public ResponseEntity<?> searchAllBySellerId(@RequestBody ReviewRequest request,
+                                                 @PageableDefault(sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
+        return reviewService.searchAllBySellerId(ReviewRequest.builder()
+                .sellerId(request.getSellerId())
+                .build(), pageable);
     }
+
+    @GetMapping("/getAllByOfferId")
+    public ResponseEntity<?> getAllByOfferId(@RequestParam Long offerId) {
+        return reviewService.getAllByOfferId(ReviewRequest.builder().offerId(offerId).build());
+    }
+
 
 
 }

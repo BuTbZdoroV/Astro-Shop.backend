@@ -24,6 +24,7 @@ public class OfferResponse {
     Long userId;
     Date createdAt;
     Integer availability;
+    String pictureUrl;
     Map<String, Object> attributes;
     LotResponse lot;
 }
