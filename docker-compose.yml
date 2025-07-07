@@ -10,21 +10,23 @@ services:
       ZOOKEEPER_CLIENT_PORT: 2181
       ZOOKEEPER_TICK_TIME: 2000
     networks: [microservices-net]
+    restart: unless-stopped
 
   kafka:
     image: confluentinc/cp-kafka:7.4.1
     container_name: kafka
     depends_on: [zookeeper]
-    ports: ["9092:9092", "29092:29092"]
+    ports: ["9092:9092"]  # Убрал EXTERNAL порт
     environment:
       KAFKA_BROKER_ID: 1
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,EXTERNAL://localhost:29092
-      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,EXTERNAL:PLAINTEXT
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT
       KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
       KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
     networks: [microservices-net]
+    restart: unless-stopped
 
   chat_service_db:
     image: mongo:6.0
@@ -33,7 +35,6 @@ services:
       MONGO_INITDB_ROOT_USERNAME: butbzdorov
       MONGO_INITDB_ROOT_PASSWORD: 102938asd
       MONGO_INITDB_DATABASE: chat_service_db
-    volumes: [mongodb_data:/data/db]
     networks: [microservices-net]
     restart: unless-stopped
 
@@ -44,49 +45,38 @@ services:
       POSTGRES_USER: butbzdorov
       POSTGRES_PASSWORD: 102938asd
       POSTGRES_DB: user_service_db
-      PGDATA: /var/lib/postgresql/data/pgdata
-    volumes:
-      - user_data:/var/lib/postgresql/data
-      - ./init-scripts:/docker-entrypoint-initdb.d
     networks: [microservices-net]
     restart: unless-stopped
 
   product_service_db:
-    # аналогично user_service_db с своими настройками
     image: postgres:13
     container_name: product_service_db
     environment:
       POSTGRES_USER: butbzdorov
       POSTGRES_PASSWORD: 102938asd
       POSTGRES_DB: product_service_db
-      PGDATA: /var/lib/postgresql/data/pgdata
-    volumes: [product_data:/var/lib/postgresql/data]
     networks: [microservices-net]
     restart: unless-stopped
 
   review_service_db:
-    # аналогично другим Postgres
     image: postgres:13
     container_name: review_service_db
     environment:
       POSTGRES_USER: butbzdorov
       POSTGRES_PASSWORD: 102938asd
       POSTGRES_DB: review_service_db
-      PGDATA: /var/lib/postgresql/data/pgdata
-    volumes: [review_data:/var/lib/postgresql/data]
     networks: [microservices-net]
     restart: unless-stopped
 
   redis:
     image: redis:7.0
     container_name: redis
-    volumes: [redis_data:/data]
     networks: [microservices-net]
     restart: unless-stopped
 
   # --- Микросервисы ---
   user-service:
-    build: ./user-service # путь к сервису
+    image: butbzdorov/astro-shopbackend-user-service:latest
     container_name: user-service
     ports: ["8082:8082"]
     environment:
@@ -98,55 +88,60 @@ services:
       - redis
       - kafka
     networks: [microservices-net]
-    restart: on-failure
+    restart: unless-stopped
 
   product-service:
-    build: ./product-service
+    image: butbzdorov/astro-shopbackend-product-service:latest
     container_name: product-service
     ports: ["8081:8081"]
     environment:
       SPRING_DATASOURCE_URL: jdbc:postgresql://product_service_db:5432/product_service_db
       SPRING_DATA_REDIS_HOST: redis
       SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
-    depends_on: [product_service_db, redis, kafka]
+    depends_on:
+      - product_service_db
+      - redis
+      - kafka
     networks: [microservices-net]
-    restart: on-failure
+    restart: unless-stopped
 
   chat-service:
-    build: ./chat-service
+    image: butbzdorov/astro-shopbackend-chat-service:latest
     container_name: chat-service
     ports: ["8086:8086"]
     environment:
       SPRING_DATA_MONGODB_URI: mongodb://butbzdorov:102938asd@chat_service_db:27017/chat_service_db?authSource=admin
       SPRING_DATA_REDIS_HOST: redis
       WEB_SERVICE_URL: http://gateway-service:8080
-    depends_on: [chat_service_db, redis]
+    depends_on:
+      - chat_service_db
+      - redis
     networks: [microservices-net]
-    restart: on-failure
+    restart: unless-stopped
 
   review-service:
-    build: ./review-service
+    image: butbzdorov/astro-shopbackend-review-service:latest
     container_name: review-service
     ports: ["8083:8083"]
     environment:
       SPRING_DATASOURCE_URL: jdbc:postgresql://review_service_db:5432/review_service_db
-    depends_on: [review_service_db]
+    depends_on:
+      - review_service_db
     networks: [microservices-net]
-    restart: on-failure
+    restart: unless-stopped
 
   media-service:
-    build: ./media-service
+    image: butbzdorov/astro-shopbackend-media-service:latest
     container_name: media-service
     ports: ["8085:8085"]
-    volumes:
-      - uploads:/app/uploads # постоянное хранилище для файлов
     environment:
-      APP_UPLOAD_DIR: /app/uploads
+      # Для временного хранилища (лучше использовать S3)
+      APP_UPLOAD_DIR: /tmp/uploads
     networks: [microservices-net]
-    restart: on-failure
+    restart: unless-stopped
 
   gateway-service:
-    build: ./gateway-service
+    image: butbzdorov/astro-shopbackend-gateway-service:latest
     container_name: gateway-service
     ports: ["8080:8080"]
     depends_on:
@@ -156,16 +151,8 @@ services:
       - review-service
       - media-service
     networks: [microservices-net]
-    restart: on-failure
+    restart: unless-stopped
 
 networks:
   microservices-net:
     driver: bridge
-
-volumes:
-  user_data: {}
-  product_data: {}
-  review_data: {}
-  mongodb_data: {}
-  redis_data: {}
-  uploads: {} # для media-service
