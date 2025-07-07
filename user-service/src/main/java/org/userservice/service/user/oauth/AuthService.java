@@ -5,6 +5,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -23,6 +24,8 @@ import java.util.Set;
 @Service
 @RequiredArgsConstructor
 public class AuthService {
+    @Value("${user-service.url}")
+    private String userServiceURL;
     private final Logger logger = LoggerFactory.getLogger(AuthService.class);
     private final UserRepository userRepository;
     private final JwtUtils jwtUtils;
@@ -51,7 +54,7 @@ public class AuthService {
             logger.info("Created new Anonymous: {}", anonymousPrincipal);
             return ResponseEntity.ok(Map.of("token", token));
         } else {
-            String redirectUrl = "http://localhost:8080/oauth2/authorization/" + provider;
+            String redirectUrl = userServiceURL + "/oauth2/authorization/" + provider;
             return ResponseEntity.status(HttpStatus.FOUND)
                     .header(HttpHeaders.LOCATION, redirectUrl)
                     .build();
