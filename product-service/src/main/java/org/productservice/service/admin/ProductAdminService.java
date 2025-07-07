@@ -9,6 +9,10 @@ import org.productservice.service.user.ProductService;
 import org.productservice.service.utils.ProductUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.cache.annotation.CacheConfig;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.CachePut;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -20,6 +24,7 @@ import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
+@CacheConfig(cacheNames = {"products"})
 public class ProductAdminService {
     private final Logger logger = LoggerFactory.getLogger(ProductAdminService.class);
 
@@ -28,6 +33,15 @@ public class ProductAdminService {
 
 
     @Transactional
+    @Caching(
+            put = {
+                    @CachePut(key = "'product:' + #result.body.id", value = "products"),
+                    @CachePut(key = "'product:name:' + #result.body.name", value = "products")
+            },
+            evict = {
+                    @CacheEvict(key = "'product:all'", value = "products")
+            }
+    )
     public ResponseEntity<?> create(ProductRequest request) {
         if (request == null) {
             logger.warn("Request is null");
@@ -60,6 +74,15 @@ public class ProductAdminService {
 
 
     @Transactional
+    @Caching(
+            put = {
+                    @CachePut(key = "'product:' + #result.body.id", value = "products", condition = "#result != null"),
+                    @CachePut(key = "'product:name:' + #result.body.name", value = "products", condition = "#result != null")
+            },
+            evict = {
+                    @CacheEvict(key = "'product:all'", value = "products")
+            }
+    )
     public ResponseEntity<?> update(ProductRequest request) {
         if (request == null)
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Product request cannot be null");
@@ -101,6 +124,13 @@ public class ProductAdminService {
     }
 
     @Transactional
+    @Caching(
+            evict = {
+                    @CacheEvict(key = "'product:' + #request.id", value = "products"),
+                    @CacheEvict(key = "'product:name:' + #product.name", value = "products"),
+                    @CacheEvict(key = "'product:all'", value = "products")
+            }
+    )
     public ResponseEntity<?> delete(ProductRequest request) {
         if (request == null) throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Product request cannot be null");
 

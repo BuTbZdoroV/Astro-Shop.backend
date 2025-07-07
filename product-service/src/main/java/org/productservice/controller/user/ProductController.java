@@ -1,5 +1,6 @@
 package org.productservice.controller.user;
 
+import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.productservice.model.dto.request.product.ProductRequest;
@@ -31,6 +32,12 @@ public final class ProductController {
     @GetMapping("/getAll")
     public ResponseEntity<?> getAll() {
         return productService.getAll();
+    }
+
+    @GetMapping("/getAllNameWithLots")
+    @Operation(description = "Возвращает все продукты с полями id, name и прилежащие к ним лоты тоже с id, name")
+    public ResponseEntity<?> getAllNameWithLots() {
+        return productService.getAllNameWithLots();
     }
 
 }

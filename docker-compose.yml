@@ -26,6 +26,23 @@ services:
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
 
+
+  chat_service_db:
+    image: mongo:6.0
+    container_name: chat_service_db
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: butbzdorov
+      MONGO_INITDB_ROOT_PASSWORD: 102938asd
+      MONGO_INITDB_DATABASE: chat_service_db
+      MONGO_INITDB_ROOT_ROLE: root
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+    networks:
+      - microservices-net
+    restart: unless-stopped
+
   user_service_db:
     image: postgres:13
     container_name: user_service_db
@@ -96,4 +113,5 @@ volumes:
   user_data: {}
   product_data: {}
   review_data: {}
+  mongodb_data: {}
   redis_data: {}

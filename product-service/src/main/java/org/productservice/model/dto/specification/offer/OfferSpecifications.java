@@ -31,6 +31,11 @@ public class OfferSpecifications {
                 userId != null ? criteriaBuilder.equal(root.get("userId"), userId) : null;
     }
 
+    public static Specification<Offer> hasActive(Boolean active) {
+        return (root, query, criteriaBuilder) ->
+                active != null ? criteriaBuilder.equal(root.get("active"), active) : null;
+    }
+
     public static Specification<Offer> hasAttributes(Map<String, Object> attributes) {
         return (root, query, criteriaBuilder) -> {
             if (attributes == null || attributes.isEmpty()) {

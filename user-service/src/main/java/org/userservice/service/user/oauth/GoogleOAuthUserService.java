@@ -3,6 +3,7 @@ package org.userservice.service.user.oauth;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.cache.annotation.CachePut;
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService;
 import org.springframework.security.oauth2.client.userinfo.OAuth2UserRequest;
@@ -95,7 +96,11 @@ public class GoogleOAuthUserService extends DefaultOAuth2UserService {
         return userRepository.save(user);
     }
 
-    private User registerNewUser(OAuth2UserRequest userRequest, OAuthUserInfo userInfo) {
+    @CachePut(
+            value = "users",
+            key = "#result.email" // Кэшируем нового пользователя по email
+    )
+    public User registerNewUser(OAuth2UserRequest userRequest, OAuthUserInfo userInfo) {
         User user = User.builder()
                 .email(userInfo.getEmail())
                 .name(userInfo.getName())

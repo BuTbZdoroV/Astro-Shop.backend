@@ -3,6 +3,10 @@ package org.userservice.service.user.favorite;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.cache.annotation.CacheConfig;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -26,6 +30,7 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+@CacheConfig(cacheNames = {"favoriteOffers"})
 public class FavoriteOfferService {
 
     private final Logger logger = LoggerFactory.getLogger(FavoriteOfferService.class);
@@ -35,6 +40,13 @@ public class FavoriteOfferService {
     private final FavoriteOfferUtils favoriteOfferUtils;
 
     @Transactional
+    @Caching(evict = {
+            @CacheEvict(key = "'user:' + #request.userId + ':offers'"),
+            @CacheEvict(key = "'user:' + #request.userId + ':count'"),
+            @CacheEvict(key = "'offer:' + #request.offerId + ':count'"),
+            @CacheEvict(key = "'topLiked'"),
+            @CacheEvict(key = "'exist:' + #request.userId + ':' + #request.offerId")
+    })
     public ResponseEntity<?> add(FavoriteOfferRequest request) {
         if (favoriteOfferRepository.existsByUserIdAndOfferId(request.getUserId(), request.getOfferId())) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "This offer already exists");
@@ -60,6 +72,7 @@ public class FavoriteOfferService {
     }
 
     @Transactional(readOnly = true)
+    @Cacheable(key = "'user:' + #request.userId + ':offer:' + #request.offerId")
     public ResponseEntity<?> get(FavoriteOfferRequest request) {
         if (request.getUserId() == null || request.getOfferId() == null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid parameters");
@@ -74,6 +87,7 @@ public class FavoriteOfferService {
     }
 
     @Transactional(readOnly = true)
+    @Cacheable(key = "'user:' + #request.userId + ':offers:page:' + #pageable.pageNumber + ':size:' + #pageable.pageSize")
     public ResponseEntity<?> searchAllByUserId(FavoriteOfferRequest request, Pageable pageable) {
         if (request == null) throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid parameters");
 
@@ -84,18 +98,21 @@ public class FavoriteOfferService {
     }
 
     @Transactional(readOnly = true)
+    @Cacheable(key = "'user:' + #request.userId + ':count'")
     public ResponseEntity<Integer> getCountByUserId(FavoriteOfferRequest request) {
         if (request == null) throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid parameters");
         return new ResponseEntity<>(favoriteOfferRepository.countByUserId(request.getUserId()), HttpStatus.OK);
     }
 
     @Transactional(readOnly = true)
+    @Cacheable(key = "'offer:' + #request.offerId + ':count'")
     public ResponseEntity<Integer> getCountByOfferId(FavoriteOfferRequest request) {
         if (request.getOfferId() == null) throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid parameters");
         return new ResponseEntity<>(favoriteOfferRepository.countByOfferId(request.getOfferId()), HttpStatus.OK);
     }
 
     @Transactional(readOnly = true)
+    @Cacheable(key = "'topLiked:limit:' + #limit", unless = "#result.body.isEmpty()")
     public ResponseEntity<?> getTopLikedOfferIds(int limit) {
 
         Pageable pageable = PageRequest.of(0, limit);
@@ -113,11 +130,20 @@ public class FavoriteOfferService {
 
 
     @Transactional(readOnly = true)
+    @Cacheable(key = "'exist:' + #request.userId + ':' + #request.offerId")
     public ResponseEntity<Boolean> checkIfExist(FavoriteOfferRequest request) {
         return new ResponseEntity<>(favoriteOfferRepository.existsByUserIdAndOfferId(request.getUserId(), request.getOfferId()), HttpStatus.OK);
     }
 
     @Transactional
+    @Caching(evict = {
+            @CacheEvict(key = "'user:' + #request.userId + ':offers'"),
+            @CacheEvict(key = "'user:' + #request.userId + ':count'"),
+            @CacheEvict(key = "'offer:' + #request.offerId + ':count'"),
+            @CacheEvict(key = "'topLiked'"),
+            @CacheEvict(key = "'exist:' + #request.userId + ':' + #request.offerId"),
+            @CacheEvict(key = "'user:' + #request.userId + ':offer:' + #request.offerId")
+    })
     public ResponseEntity<?> delete(FavoriteOfferRequest request) {
         if (!favoriteOfferRepository.existsByUserIdAndOfferId(request.getUserId(), request.getOfferId())) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "This offer does not exist");
@@ -127,7 +153,7 @@ public class FavoriteOfferService {
         return ResponseEntity.ok().build();
     }
 
-    @KafkaListener(topics = "offer.delete", groupId = "product_service")
+ /*   @KafkaListener(topics = "offer.delete", groupId = "product_service")
     public void handleOfferDelete(String message) {
         try {
             Long offerId = Long.parseLong(message);
@@ -136,7 +162,7 @@ public class FavoriteOfferService {
         } catch (NumberFormatException e) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
         }
-    }
+    }*/
 
 
 }

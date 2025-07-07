@@ -23,7 +23,8 @@ public final class OfferController {
     private final OfferService offerService;
 
     @PostMapping("/create")
-    public ResponseEntity<?> create(@RequestBody @Valid OfferRequest offerRequest, @RequestHeader("X-User-Id") Long userId) {
+    public ResponseEntity<?> create(@RequestBody @Valid OfferRequest offerRequest,
+                                    @RequestHeader("X-User-Id") Long userId) {
         if (userId == null || userId == -1) throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "UserId is null");
         return offerService.create(offerRequest, userId);
     }
@@ -62,6 +63,11 @@ public final class OfferController {
     @GetMapping("/getCountAll")
     public ResponseEntity<Long> getCountAll() {
         return offerService.getCountAll();
+    }
+
+    @GetMapping("/getCountAllByActiveTrue")
+    public ResponseEntity<Long> getCountAllByActiveTrue() {
+        return offerService.countAllByActiveTrue();
     }
 
     @GetMapping("/getName")

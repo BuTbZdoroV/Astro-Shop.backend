@@ -14,6 +14,7 @@ import org.productservice.repository.OfferRepository;
 import org.productservice.service.utils.OfferUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.cache.annotation.*;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -30,6 +31,7 @@ import java.util.*;
 
 @Service
 @RequiredArgsConstructor
+@CacheConfig(cacheNames = {"offers"})
 public class OfferService {
     private static final Logger logger = LoggerFactory.getLogger(OfferService.class);
 
@@ -40,6 +42,17 @@ public class OfferService {
     private final KafkaTemplate<String, String> kafkaTemplate;
 
     @Transactional
+    @Caching(
+            put = {
+                    @CachePut(key = "'offer:' + #result.body.id", condition = "#result != null"),
+                    @CachePut(key = "'offer:lot:' + #lot.id", condition = "#result != null"),
+                    @CachePut(key = "'offer:user:' + #userId", condition = "#result != null")
+            },
+            evict = {
+                    @CacheEvict(key = "'offer:product:' + #lot.product.id"),
+                    @CacheEvict(key = "'offer:count:*'")
+            }
+    )
     public ResponseEntity<?> create(OfferRequest offerRequest, Long userId) {
         if (offerRequest == null)
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "OfferRequest is null");
@@ -87,6 +100,18 @@ public class OfferService {
      * @throws ResponseStatusException HTTP 204 Если офер не найден
      */
     @Transactional
+    @Caching(
+            put = {
+                    @CachePut(key = "'offer:' + #result.body.id", condition = "#result != null"),
+                    @CachePut(key = "'offer:attrs:' + #result.body.id", condition = "#result != null")
+            },
+            evict = {
+                    @CacheEvict(key = "'offer:lot:' + #offer.lot.id"),
+                    @CacheEvict(key = "'offer:user:' + #userId"),
+                    @CacheEvict(key = "'offer:product:' + #offer.lot.product.id"),
+                    @CacheEvict(key = "'offer:count:*'")
+            }
+    )
     public ResponseEntity<?> update(OfferRequest offerRequest, Long userId) {
         if (offerRequest == null) throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "OfferRequest is null");
         if (offerRequest.getId() == null)
@@ -150,6 +175,13 @@ public class OfferService {
     }
 
     @Transactional
+    @Caching(evict = {
+            @CacheEvict(key = "'offer:' + #offerRequest.id"),
+            @CacheEvict(key = "'offer:lot:' + #offer.lot.id"),
+            @CacheEvict(key = "'offer:user:' + #userId"),
+            @CacheEvict(key = "'offer:product:' + #offer.lot.product.id"),
+            @CacheEvict(key = "'offer:count:*'")
+    })
     public ResponseEntity<?> delete(OfferRequest offerRequest, Long userId) {
         if (offerRequest == null)
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "OfferRequest is null");
@@ -170,6 +202,7 @@ public class OfferService {
     }
 
     @Transactional(readOnly = true)
+    @Cacheable(key = "'offer:' + #offerRequest.id", unless = "#result.body == null")
     public ResponseEntity<?> get(OfferRequest offerRequest) {
         if (offerRequest == null) throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "OfferRequest is null");
         if (offerRequest.getId() == null) throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Offer id is null");
@@ -182,6 +215,7 @@ public class OfferService {
     }
 
     @Transactional(readOnly = true)
+    @Cacheable(key = "'offer:withproduct:' + #offerRequest.id", unless = "#result.body == null")
     public ResponseEntity<?> getWithProduct(OfferRequest offerRequest) {
         if (offerRequest == null) throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "OfferRequest is null");
         if (offerRequest.getId() == null) throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Offer id is null");
@@ -191,16 +225,17 @@ public class OfferService {
 
         OfferResponse offerResponse = OfferResponse.builder()
                 .id(offer.getId())
-                .name(offerRequest.getName())
-                .shortDescription(offerRequest.getShortDescription())
-                .longDescription(offerRequest.getLongDescription())
-                .price(offerRequest.getPrice())
-                .availability(offerRequest.getAvailability())
-                .active(offerRequest.getActive())
-                .pictureUrl(offerRequest.getPictureUrl())
-                .userId(offerRequest.getUserId())
+                .name(offer.getName())
+                .shortDescription(offer.getShortDescription())
+                .longDescription(offer.getLongDescription())
+                .price(offer.getPrice())
+                .availability(offer.getAvailability())
+                .active(offer.getActive())
+                .pictureUrl(offer.getPictureUrl())
+                .userId(offer.getUserId())
                 .lot(LotResponse.builder()
                         .id(offer.getLot().getId())
+                        .name(offer.getLot().getName())
                         .product(ProductResponse.builder()
                                 .id(offer.getLot().getProduct().getId())
                                 .name(offer.getLot().getProduct().getName())
@@ -213,6 +248,7 @@ public class OfferService {
     }
 
     @Transactional(readOnly = true)
+    @Cacheable(key = "'offer:lot:' + #offerRequest.lotId", unless = "#result.body.isEmpty()")
     public ResponseEntity<?> getAll(OfferRequest offerRequest) {
         if (offerRequest == null) throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "OfferRequest is null");
         if (offerRequest.getLotId() == null)
@@ -230,22 +266,32 @@ public class OfferService {
     }
 
     @Transactional(readOnly = true)
+    @Cacheable(key = "'offer:count:total'")
     public ResponseEntity<Long> getCountAll (){
         return ResponseEntity.ok(offerRepository.count());
     }
 
     @Transactional(readOnly = true)
+    @Cacheable(key = "'offer:count:active'")
+    public ResponseEntity<Long> countAllByActiveTrue() {
+        return ResponseEntity.ok(offerRepository.countByActiveTrue());
+    }
+
+    @Transactional(readOnly = true)
+    @Cacheable(key = "'offer:name:' + #id")
     public ResponseEntity<String> getName(Long id) {
         if (id == null) throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Offer id is null");
         return new ResponseEntity<>(offerRepository.findNameById(id), HttpStatus.OK);
     }
 
     @Transactional(readOnly = true)
+    @Cacheable(key = "'offer:count:user:' + #userId")
     public ResponseEntity<?> getCountByUserId(Long userId) {
         return ResponseEntity.ok(offerRepository.countByUserId(userId));
     }
 
     @Transactional(readOnly = true)
+    @Cacheable(key = "'offer:count:useractive:' + #userId")
     public ResponseEntity<?> getCountByUserIdAndActiveTrue(Long userId) {
         return ResponseEntity.ok(offerRepository.countByUserIdAndActiveTrue(userId));
     }
@@ -263,6 +309,8 @@ public class OfferService {
      * @see OfferSpecifications
      */
     @Transactional(readOnly = true)
+    @Cacheable(key = "{#request.id, #request.name, #request.lotId, #request.userId, #pageable.pageNumber, #pageable.pageSize}",
+            unless = "#result.body.isEmpty()")
     public ResponseEntity<?> search(OfferRequest request, Pageable pageable) {
         if (request == null) throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "OfferRequest is null");
         if (pageable == null) throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Pageable is null");
@@ -285,6 +333,10 @@ public class OfferService {
             specification = specification.and(OfferSpecifications.hasUserId(request.getUserId()));
         }
 
+        if (request.getActive() != null) {
+            specification = specification.and(OfferSpecifications.hasActive(request.getActive()));
+        }
+
         if (request.getAttributes() != null && !request.getAttributes().isEmpty()) {
             specification = specification.and(OfferSpecifications.hasAttributes(request.getAttributes()));
         }
@@ -302,6 +354,7 @@ public class OfferService {
 
 
     @Transactional(readOnly = true)
+    @Cacheable(key = "'offer:exists:' + #offerId")
     public ResponseEntity<Boolean> checkOfferExists(Long offerId) {
         return ResponseEntity.ok(offerRepository.existsById(offerId));
     }

@@ -11,8 +11,10 @@ import org.reviewservice.service.utils.ReviewUtils;
 import org.reviewservice.service.utils.specification.ReviewSpecifications;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.cache.annotation.CacheConfig;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
@@ -23,10 +25,13 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDateTime;
+import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+@CacheConfig(cacheNames = {"sellerStats", "reviewsBySeller", "reviewsByOffer"})
 public class ReviewService {
     private final Logger logger = LoggerFactory.getLogger(ReviewService.class);
 
@@ -36,7 +41,12 @@ public class ReviewService {
     private final ReviewSpecifications reviewSpecifications;
 
     @Transactional
-    @CacheEvict(value = {"sellerStats", "allBySellerId", "allByOfferId"}, key = "#request.sellerId")
+    @Caching(evict = {
+            @CacheEvict(key = "'stats:' + #request.sellerId", value = "sellerStats"),
+            @CacheEvict(key = "'seller:' + #request.sellerId", value = "reviewsBySeller"),
+            @CacheEvict(key = "'offer:' + #request.offerId", value = "reviewsByOffer"),
+            @CacheEvict(key = "#request.sellerId", value = "sellerReviewCount")
+    })
     public ResponseEntity<?> create(ReviewRequest request) {
         if (request == null) throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
         if (request.getOfferId() == null)
@@ -66,7 +76,7 @@ public class ReviewService {
     }
 
     @Transactional(readOnly = true)
-    @Cacheable(value = "sellerStats", key = "#request.sellerId")
+    @Cacheable(key = "'stats:' + #request.sellerId", unless = "#result.body.avgRating == null")
     public ResponseEntity<?> getSellerStats(ReviewRequest request) {
         if (request == null)
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
@@ -86,6 +96,7 @@ public class ReviewService {
     }
 
     @Transactional(readOnly = true)
+    @Cacheable(key = "'seller:' + #request.sellerId + ':' + #pageable.pageNumber + ':' + #pageable.pageSize")
     public ResponseEntity<?> searchAllBySellerId(ReviewRequest request, Pageable pageable) {
         if (request == null) throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
         if (request.getSellerId() == null) throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "sellerId is required");
@@ -100,20 +111,31 @@ public class ReviewService {
     }
 
     @Transactional(readOnly = true)
-    @Cacheable(value = "allByOfferId", key = "#request.offerId")
+    @Cacheable(key = "'offer:' + #request.offerId",
+            unless = "#result == null || (#result.getBody() != null && #result.getBody().isEmpty())")
     public ResponseEntity<?> getAllByOfferId(ReviewRequest request) {
-        if (request == null) throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
-        if (request.getOfferId() == null) throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "offerId is required");
+        if (request == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Request cannot be null");
+        }
+        if (request.getOfferId() == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "offerId is required");
+        }
 
         List<Review> reviews = reviewRepository.findAllByOfferId(request.getOfferId());
 
-        if (reviews.isEmpty()) return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
-        List<ReviewResponse> response = reviews.stream().map(reviewUtils::buildResponse).toList();
+        if (reviews.isEmpty()) {
+            return ResponseEntity.ok(Collections.emptyList()); // Возвращаем пустой список с 200 OK
+        }
 
-        return ResponseEntity.status(HttpStatus.OK).body(response);
+        List<ReviewResponse> response = reviews.stream()
+                .map(reviewUtils::buildResponse)
+                .collect(Collectors.toList());
+
+        return ResponseEntity.ok(response);
     }
 
     @Transactional(readOnly = true)
+    @Cacheable(key = "#sellerId", value = "sellerReviewCount")
     public ResponseEntity<?> getCountBySellerId(Long sellerId) {
         return ResponseEntity.status(HttpStatus.OK).body(reviewRepository.getCountBySellerId(sellerId));
     }

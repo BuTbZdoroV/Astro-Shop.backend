@@ -3,6 +3,7 @@ package org.userservice.service.admin;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -23,6 +24,10 @@ public class UserAdminService {
     private final UserRepository userRepository;
     private final UserUtils userUtils;
 
+    @CacheEvict(
+            value = {"users", "userPrincipals", "fullUserData", "basicUserData"},
+            key = "#userRequest.id"
+    )
     @Transactional
     public ResponseEntity<?> update(UserRequest userRequest) {
         User user = userUtils.findByRequest(userRequest, userRepository);
@@ -51,6 +56,10 @@ public class UserAdminService {
         return new ResponseEntity<>(changedData, HttpStatus.OK);
     }
 
+    @CacheEvict(
+            value = {"users", "userPrincipals", "fullUserData", "basicUserData"},
+            key = "#userRequest.id"
+    )
     @Transactional
     public ResponseEntity<?> delete(UserRequest userRequest) {
         User user = userUtils.findByRequest(userRequest, userRepository);

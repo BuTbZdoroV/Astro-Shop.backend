@@ -4,6 +4,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationServiceException;
@@ -40,6 +41,8 @@ public class UserService {
      *
      * @return UserResponse DTO хранящий данные пользователя
      */
+    @Cacheable(value = "users", key = "#userRequest.id != null ? #userRequest.id : " +
+            "(#userRequest.email != null ? #userRequest.email : #userRequest.name)")
     public ResponseEntity<?> find(UserRequest userRequest) {
         User user = userUtils.findByRequest(userRequest, userRepository);
         UserResponse userResponse = userUtils.buildResponse(user);
@@ -48,6 +51,7 @@ public class UserService {
     }
 
     @Transactional(readOnly = true)
+    @Cacheable(value = "userPrincipals", key = "#userPrincipal.id")
     public ResponseEntity<?> getUserPrincipalData(UserPrincipal userPrincipal) {
         if (userPrincipal == null) throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
 
@@ -61,6 +65,8 @@ public class UserService {
     }
 
     @Transactional(readOnly = true)
+    @Cacheable(value = "fullUserData", key = "#userRequest.id != null ? #userRequest.id : " +
+            "(#userRequest.email != null ? #userRequest.email : #userRequest.name)")
     public ResponseEntity<?> getFullData(UserRequest userRequest) {
         if (userRequest == null) throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
 
@@ -73,6 +79,8 @@ public class UserService {
     }
 
     @Transactional(readOnly = true)
+    @Cacheable(value = "basicUserData", key = "#userRequest.id != null ? #userRequest.id : " +
+            "(#userRequest.email != null ? #userRequest.email : #userRequest.name)")
     public ResponseEntity<?> getBasicData(UserRequest userRequest) {
         if (userRequest == null) throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
 
@@ -83,6 +91,7 @@ public class UserService {
     }
 
     @Transactional(readOnly = true)
+    @Cacheable(value = "topBuyers", key = "#limit")
     public ResponseEntity<?> getTopByBuyerRating(Integer limit) {
         if (limit == null) throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
         if (limit <= 0) throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
@@ -100,7 +109,7 @@ public class UserService {
         return ResponseEntity.status(HttpStatus.OK).body(userResponses);
     }
 
-
+    @Cacheable(value = "userCount")
     public ResponseEntity<Long> getCountAll() {
         return ResponseEntity.ok(userRepository.count());
     }

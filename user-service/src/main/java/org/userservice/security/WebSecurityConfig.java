@@ -1,6 +1,7 @@
 package org.userservice.security;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -23,6 +24,8 @@ public class WebSecurityConfig {
 
     private final GoogleOAuthUserService googleOAuthUserService;
     private final JwtUtils jwtUtils;
+    @Value("${frontend.url}")
+    private String frontendUrl;
 
     @Bean
     public SecurityFilterChain configure(HttpSecurity http) throws Exception {
@@ -42,7 +45,7 @@ public class WebSecurityConfig {
                             String jwt = jwtUtils.generateToken(userPrincipal);
                             response.setHeader("Authorization", "Bearer " + jwt);
 
-                            response.sendRedirect("http://localhost:5173/oauth-callback/?token=" + URLEncoder.encode(jwt, StandardCharsets.UTF_8));
+                            response.sendRedirect(frontendUrl + "/oauth-callback/?token=" + URLEncoder.encode(jwt, StandardCharsets.UTF_8));
                         }))
                 .logout(logout -> logout
                         .logoutUrl("/oauth2/logout")

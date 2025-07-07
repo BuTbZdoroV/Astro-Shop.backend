@@ -18,4 +18,5 @@ public interface OfferRepository extends JpaRepository<Offer, Long>, JpaSpecific
 
     Integer countByUserId(Long userId);
     Integer countByUserIdAndActiveTrue(Long userId);
+    Long countByActiveTrue();
 }

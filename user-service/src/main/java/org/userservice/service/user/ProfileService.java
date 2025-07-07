@@ -3,6 +3,7 @@ package org.userservice.service.user;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.cache.annotation.*;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -23,6 +24,7 @@ import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
+@CacheConfig(cacheNames = {"profiles"})
 public class ProfileService {
     private final Logger logger = LoggerFactory.getLogger(ProfileService.class);
 
@@ -31,6 +33,7 @@ public class ProfileService {
     private final ProfileUtils profileUtils;
 
     @Transactional(readOnly = true)
+    @Cacheable(key = "'user:' + #request.userId", unless = "#result.body == null")
     public ResponseEntity<?> get(ProfileRequest request) {
         if (request.getUserId() == null) throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "userId is null");
 
@@ -43,6 +46,14 @@ public class ProfileService {
     }
 
     @Transactional
+    @Caching(
+            put = {
+                    @CachePut(key = "'user:' + #request.id", value = "profiles")
+            },
+            evict = {
+                    @CacheEvict(key = "'user:' + #request.id + ':full'", value = "userData")
+            }
+    )
     public ResponseEntity<?> update(UserRequest request) {
         if (request == null) throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "request is null");
 

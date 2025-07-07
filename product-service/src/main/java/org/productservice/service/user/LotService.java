@@ -8,6 +8,7 @@ import org.productservice.model.entity.Product;
 import org.productservice.repository.LotRepository;
 import org.productservice.repository.ProductRepository;
 import org.productservice.service.utils.LotUtils;
+import org.springframework.cache.annotation.*;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -24,6 +25,7 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+@CacheConfig(cacheNames = {"lots"})
 public class LotService {
     private final Logger logger = LoggerFactory.getLogger(LotService.class);
 
@@ -33,6 +35,7 @@ public class LotService {
     private final LotUtils lotUtils;
 
     @Transactional(readOnly = true)
+    @Cacheable(key = "'lot:' + #request.id", unless = "#result.body == null")
     public ResponseEntity<?> get(LotRequest request) {
         Lot lot = lotUtils.findByRequest(request, lotRepository);
         LotResponse response = lotUtils.buildResponse(lot);
@@ -41,6 +44,7 @@ public class LotService {
     }
 
     @Transactional(readOnly = true)
+    @Cacheable(key = "'product:' + #request.productId + ':lots'", unless = "#result.body.isEmpty()")
     public ResponseEntity<?> getAll(LotRequest request) {
         if (request == null) throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid request");
         if (request.getProductId() == null) throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Product id is null");
