@@ -1,31 +1,30 @@
 version: '3.8'
 
 services:
+  # --- Инфраструктура ---
   zookeeper:
     image: confluentinc/cp-zookeeper:latest
     container_name: zookeeper
-    ports:
-      - "2181:2181"
+    ports: ["2181:2181"]
     environment:
       ZOOKEEPER_CLIENT_PORT: 2181
       ZOOKEEPER_TICK_TIME: 2000
+    networks: [microservices-net]
 
   kafka:
     image: confluentinc/cp-kafka:7.4.1
     container_name: kafka
-    depends_on:
-      - zookeeper
-    ports:
-      - "9092:9092"
+    depends_on: [zookeeper]
+    ports: ["9092:9092", "29092:29092"]
     environment:
       KAFKA_BROKER_ID: 1
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,EXTERNAL://localhost:29092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,EXTERNAL:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
       KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
-
+    networks: [microservices-net]
 
   chat_service_db:
     image: mongo:6.0
@@ -34,13 +33,8 @@ services:
       MONGO_INITDB_ROOT_USERNAME: butbzdorov
       MONGO_INITDB_ROOT_PASSWORD: 102938asd
       MONGO_INITDB_DATABASE: chat_service_db
-      MONGO_INITDB_ROOT_ROLE: root
-    ports:
-      - "27017:27017"
-    volumes:
-      - mongodb_data:/data/db
-    networks:
-      - microservices-net
+    volumes: [mongodb_data:/data/db]
+    networks: [microservices-net]
     restart: unless-stopped
 
   user_service_db:
@@ -51,16 +45,14 @@ services:
       POSTGRES_PASSWORD: 102938asd
       POSTGRES_DB: user_service_db
       PGDATA: /var/lib/postgresql/data/pgdata
-    ports:
-      - "5433:5432"
     volumes:
       - user_data:/var/lib/postgresql/data
       - ./init-scripts:/docker-entrypoint-initdb.d
+    networks: [microservices-net]
     restart: unless-stopped
-    networks:
-      - microservices-net
 
   product_service_db:
+    # аналогично user_service_db с своими настройками
     image: postgres:13
     container_name: product_service_db
     environment:
@@ -68,16 +60,12 @@ services:
       POSTGRES_PASSWORD: 102938asd
       POSTGRES_DB: product_service_db
       PGDATA: /var/lib/postgresql/data/pgdata
-    ports:
-      - "5434:5432"
-    volumes:
-      - product_data:/var/lib/postgresql/data
-      - ./init-scripts:/docker-entrypoint-initdb.d
+    volumes: [product_data:/var/lib/postgresql/data]
+    networks: [microservices-net]
     restart: unless-stopped
-    networks:
-      - microservices-net
 
   review_service_db:
+    # аналогично другим Postgres
     image: postgres:13
     container_name: review_service_db
     environment:
@@ -85,25 +73,90 @@ services:
       POSTGRES_PASSWORD: 102938asd
       POSTGRES_DB: review_service_db
       PGDATA: /var/lib/postgresql/data/pgdata
-    ports:
-      - "5435:5432"
-    volumes:
-      - review_data:/var/lib/postgresql/data
-      - ./init-scripts:/docker-entrypoint-initdb.d
+    volumes: [review_data:/var/lib/postgresql/data]
+    networks: [microservices-net]
     restart: unless-stopped
-    networks:
-      - microservices-net
 
   redis:
     image: redis:7.0
     container_name: redis
-    ports:
-      - "6379:6379"
-    volumes:
-      - redis_data:/data
+    volumes: [redis_data:/data]
+    networks: [microservices-net]
     restart: unless-stopped
-    networks:
-      - microservices-net
+
+  # --- Микросервисы ---
+  user-service:
+    build: ./user-service # путь к сервису
+    container_name: user-service
+    ports: ["8082:8082"]
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://user_service_db:5432/user_service_db
+      SPRING_DATA_REDIS_HOST: redis
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+    depends_on:
+      - user_service_db
+      - redis
+      - kafka
+    networks: [microservices-net]
+    restart: on-failure
+
+  product-service:
+    build: ./product-service
+    container_name: product-service
+    ports: ["8081:8081"]
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://product_service_db:5432/product_service_db
+      SPRING_DATA_REDIS_HOST: redis
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+    depends_on: [product_service_db, redis, kafka]
+    networks: [microservices-net]
+    restart: on-failure
+
+  chat-service:
+    build: ./chat-service
+    container_name: chat-service
+    ports: ["8086:8086"]
+    environment:
+      SPRING_DATA_MONGODB_URI: mongodb://butbzdorov:102938asd@chat_service_db:27017/chat_service_db?authSource=admin
+      SPRING_DATA_REDIS_HOST: redis
+      WEB_SERVICE_URL: http://gateway-service:8080
+    depends_on: [chat_service_db, redis]
+    networks: [microservices-net]
+    restart: on-failure
+
+  review-service:
+    build: ./review-service
+    container_name: review-service
+    ports: ["8083:8083"]
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://review_service_db:5432/review_service_db
+    depends_on: [review_service_db]
+    networks: [microservices-net]
+    restart: on-failure
+
+  media-service:
+    build: ./media-service
+    container_name: media-service
+    ports: ["8085:8085"]
+    volumes:
+      - uploads:/app/uploads # постоянное хранилище для файлов
+    environment:
+      APP_UPLOAD_DIR: /app/uploads
+    networks: [microservices-net]
+    restart: on-failure
+
+  gateway-service:
+    build: ./gateway-service
+    container_name: gateway-service
+    ports: ["8080:8080"]
+    depends_on:
+      - user-service
+      - product-service
+      - chat-service
+      - review-service
+      - media-service
+    networks: [microservices-net]
+    restart: on-failure
 
 networks:
   microservices-net:
@@ -115,3 +168,4 @@ volumes:
   review_data: {}
   mongodb_data: {}
   redis_data: {}
+  uploads: {} # для media-service
