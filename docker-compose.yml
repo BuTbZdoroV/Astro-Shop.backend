@@ -81,6 +81,10 @@ services:
     ports: ["8082:8082"]
     environment:
       SPRING_DATASOURCE_URL: jdbc:postgresql://user_service_db:5432/user_service_db
+      SPRING_DATASOURCE_USERNAME: butbzdorov
+      SPRING_DATASOURCE_PASSWORD: 102938asd
+      SPRING_JPA_HIBERNATE_DDL-AUTO: update
+      SPRING_DATASOURCE_DRIVER-CLASS-NAME: org.postgresql.Driver
       SPRING_DATA_REDIS_HOST: redis
     depends_on:
       - user_service_db
@@ -94,6 +98,10 @@ services:
     ports: ["8081:8081"]
     environment:
       SPRING_DATASOURCE_URL: jdbc:postgresql://product_service_db:5432/product_service_db
+      SPRING_DATASOURCE_USERNAME: butbzdorov
+      SPRING_DATASOURCE_PASSWORD: 102938asd
+      SPRING_JPA_HIBERNATE_DDL-AUTO: update
+      SPRING_DATASOURCE_DRIVER-CLASS-NAME: org.postgresql.Driver
       SPRING_DATA_REDIS_HOST: redis
     depends_on:
       - product_service_db
@@ -121,6 +129,10 @@ services:
     ports: ["8083:8083"]
     environment:
       SPRING_DATASOURCE_URL: jdbc:postgresql://review_service_db:5432/review_service_db
+      SPRING_DATASOURCE_USERNAME: butbzdorov
+      SPRING_DATASOURCE_PASSWORD: 102938asd
+      SPRING_JPA_HIBERNATE_DDL-AUTO: update
+      SPRING_DATASOURCE_DRIVER-CLASS-NAME: org.postgresql.Driver
     depends_on:
       - review_service_db
     networks: [microservices-net]
