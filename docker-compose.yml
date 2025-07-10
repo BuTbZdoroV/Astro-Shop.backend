@@ -37,8 +37,6 @@ services:
       MONGO_INITDB_DATABASE: chat_service_db
     networks: [ microservices-net ]
     restart: unless-stopped
-    ports:
-      - "27017:27017"
 
   user_service_db:
     image: postgres:16
