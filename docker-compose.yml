@@ -117,6 +117,7 @@ services:
       SPRING_DATA_MONGODB_URI: mongodb://butbzdorov:102938asd@chat_service_db:27017/chat_service_db?authSource=admin
       SPRING_DATA_REDIS_HOST: redis
       WEB_SERVICE_URL: http://gateway-service:8080
+      SPRING_AUTOCONFIGURE_EXCLUDE: org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration,org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfiguration
     depends_on:
       - chat_service_db
       - redis
