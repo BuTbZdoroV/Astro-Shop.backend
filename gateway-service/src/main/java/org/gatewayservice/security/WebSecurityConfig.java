@@ -28,6 +28,8 @@ public class WebSecurityConfig {
                 .authorizeExchange(exchanges -> exchanges
                         .anyExchange().permitAll()
                 )
+                .formLogin(ServerHttpSecurity.FormLoginSpec::disable)
+                .httpBasic(ServerHttpSecurity.HttpBasicSpec::disable)
                 .build();
     }
 
@@ -35,7 +37,7 @@ public class WebSecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
         config.setAllowCredentials(true);
-        config.setAllowedOrigins(List.of(frontendUrl, "http://localhost:5173/"));
+        config.setAllowedOrigins(List.of(frontendUrl, "http://localhost:5173"));
         config.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
         config.setAllowedHeaders(List.of("*"));
 
