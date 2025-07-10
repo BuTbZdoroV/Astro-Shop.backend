@@ -143,15 +143,16 @@ services:
     container_name: media-service
     ports: ["8085:8085"]
     environment:
-      # Для временного хранилища (лучше использовать S3)
-      APP_UPLOAD_DIR: /tmp/uploads
-    networks: [microservices-net]
+      SPRING_AUTOCONFIGURE_EXCLUDE: org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration,org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfiguration,org.springframework.boot.autoconfigure.jdbc.DataSourceTransactionManagerAutoConfiguration
+    networks: [ microservices-net ]
     restart: unless-stopped
 
   gateway-service:
     image: butbzdorov/astro-shopbackend-gateway-service:latest
     container_name: gateway-service
     ports: ["8080:8080"]
+    environment:
+      SPRING_AUTOCONFIGURE_EXCLUDE: org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration,org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfiguration,org.springframework.boot.autoconfigure.jdbc.DataSourceTransactionManagerAutoConfiguration
     depends_on:
       - user-service
       - product-service
