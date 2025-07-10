@@ -39,7 +39,7 @@ services:
   #  restart: unless-stopped
 
   user_service_db:
-    image: postgres:13
+    image: postgres:16
     container_name: user_service_db
     environment:
       POSTGRES_USER: butbzdorov
@@ -49,7 +49,7 @@ services:
     restart: unless-stopped
 
   product_service_db:
-    image: postgres:13
+    image: postgres:16
     container_name: product_service_db
     environment:
       POSTGRES_USER: butbzdorov
@@ -59,7 +59,7 @@ services:
     restart: unless-stopped
 
   review_service_db:
-    image: postgres:13
+    image: postgres:16
     container_name: review_service_db
     environment:
       POSTGRES_USER: butbzdorov
