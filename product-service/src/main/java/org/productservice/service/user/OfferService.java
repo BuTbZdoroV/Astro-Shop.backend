@@ -39,7 +39,7 @@ public class OfferService {
     private final LotRepository lotRepository;
     private final OfferUtils offerUtils;
 
-    private final KafkaTemplate<String, String> kafkaTemplate;
+    //private final KafkaTemplate<String, String> kafkaTemplate;
 
     @Transactional
     @Caching(
@@ -197,7 +197,7 @@ public class OfferService {
 
         offerRepository.delete(offer);
 
-        kafkaTemplate.send("offer.delete", offer.getId().toString());
+       // kafkaTemplate.send("offer.delete", offer.getId().toString());
         return new ResponseEntity<>("Offer delete by ID: " + offerRequest.getId(), HttpStatus.OK);
     }
 
