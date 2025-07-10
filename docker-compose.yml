@@ -143,7 +143,7 @@ services:
     depends_on:
       - user-service
       - product-service
-      - chat-service
+     # - chat-service
       - review-service
       - media-service
     networks: [microservices-net]
