@@ -42,6 +42,7 @@ dependencies {
     testImplementation 'org.testcontainers:junit-jupiter'
     testImplementation 'org.springframework.boot:spring-boot-testcontainers'
   //  testImplementation 'org.testcontainers:kafka'
+    implementation 'org.postgresql:postgresql:42.7.7'
     testImplementation 'org.testcontainers:postgresql'
     compileOnly 'org.projectlombok:lombok'
     developmentOnly 'org.springframework.boot:spring-boot-devtools'
