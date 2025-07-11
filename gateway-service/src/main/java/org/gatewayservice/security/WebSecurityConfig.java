@@ -28,8 +28,6 @@ public class WebSecurityConfig {
                 .authorizeExchange(exchanges -> exchanges
                         .anyExchange().permitAll()
                 )
-                .formLogin(ServerHttpSecurity.FormLoginSpec::disable)
-                .httpBasic(ServerHttpSecurity.HttpBasicSpec::disable)
                 .build();
     }
 

@@ -1,4 +1,3 @@
-version: '3.8'
 
 services:
   # --- Инфраструктура ---
@@ -150,18 +149,7 @@ services:
 
   gateway-service:
     image: butbzdorov/astro-shopbackend-gateway-service:latest
-    container_name: gateway-service
-    ports: ["8080:8080"]
-    environment:
-       SPRING_AUTOCONFIGURE_EXCLUDE: org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration,org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfiguration,org.springframework.boot.autoconfigure.jdbc.DataSourceTransactionManagerAutoConfiguration,org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration,org.springframework.boot.autoconfigure.security.reactive.ReactiveSecurityAutoConfiguration
-    depends_on:
-      - user-service
-      - product-service
-      - chat-service
-      - review-service
-      - media-service
-    networks: [microservices-net]
-    restart: unless-stopped
+    ports: [ "8080:8080" ]
 
 networks:
   microservices-net:
