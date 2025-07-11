@@ -149,6 +149,12 @@ services:
     container_name: gateway-service
     image: butbzdorov/astro-shopbackend-gateway-service:latest
     ports: [ "8080:8080" ]
+    environment:
+
+      - BACKEND_URL=http://user-service:8082
+      - FRONTEND_URL=https://quickly-delta.vercel.app
+
+
     depends_on:
       - user-service
       - product-service
