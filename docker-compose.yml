@@ -151,11 +151,12 @@ services:
     ports: [ "18080:8080" ]
 
     environment:
-      - SPRING_CLOUD_GATEWAY_ROUTES[11]_ID=oauth2-service
-      - SPRING_CLOUD_GATEWAY_ROUTES[11]_URI=http://user-service:8082
-      - SPRING_CLOUD_GATEWAY_ROUTES[11]_PREDICATES_0=Path=/oauth2/**
       - SPRING_CLOUD_GATEWAY_FORWARDED_ENABLED=true
-      - SERVER_FORWARDHEADERS_STRATEGY=framework
+      - SERVER_FORWARDHEADERS_STRATEGY=native
+      - SPRING_CLOUD_GATEWAY_HTTPCLIENT_FORWARDED_ENABLED=true
+      - SPRING_CLOUD_GATEWAY_ROUTES[0].id=oauth-route
+      - SPRING_CLOUD_GATEWAY_ROUTES[0].predicates[0]=Path=/oauth2/**
+      - SPRING_CLOUD_GATEWAY_ROUTES[0].uri=http://user-service:8082
 
     depends_on:
       - user-service
