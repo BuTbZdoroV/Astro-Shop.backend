@@ -85,6 +85,10 @@ services:
       SPRING_JPA_HIBERNATE_DDL-AUTO: update
       SPRING_DATASOURCE_DRIVER-CLASS-NAME: org.postgresql.Driver
       SPRING_DATA_REDIS_HOST: redis
+      SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_GOOGLE_REDIRECT-URI: https://butbzdorov-astro-shop-backend-9109.twc1.net/login/oauth2/code/google
+      SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_GOOGLE_CLIENT-ID: 749123856044-9idsvcuc8qjqm3b2u0d5g3l12irr7kvn.apps.googleusercontent.com
+      SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_GOOGLE_CLIENT-SECRET: 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
+      SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_GOOGLE_SCOPE: email,profile
     depends_on:
       - user_service_db
       - redis
