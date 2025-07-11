@@ -77,7 +77,7 @@ services:
   user-service:
     image: butbzdorov/astro-shopbackend-user-service:latest
     container_name: user-service
-    ports: ["8082:8082"]
+    ports: ["18082:8082"]
     environment:
       SPRING_DATASOURCE_URL: jdbc:postgresql://user_service_db:5432/user_service_db
       SPRING_DATASOURCE_USERNAME: butbzdorov
@@ -94,7 +94,7 @@ services:
   product-service:
     image: butbzdorov/astro-shopbackend-product-service:latest
     container_name: product-service
-    ports: ["8081:8081"]
+    ports: ["18081:8081"]
     environment:
       SPRING_DATASOURCE_URL: jdbc:postgresql://product_service_db:5432/product_service_db
       SPRING_DATASOURCE_USERNAME: butbzdorov
@@ -111,7 +111,7 @@ services:
   chat-service:
     image: butbzdorov/astro-shopbackend-chat-service:latest
     container_name: chat-service
-    ports: [ "8086:8086" ]
+    ports: [ "18086:8086" ]
     environment:
       SPRING_DATA_MONGODB_URI: mongodb://butbzdorov:102938asd@chat_service_db:27017/chat_service_db?authSource=admin
       SPRING_DATA_REDIS_HOST: redis
@@ -126,7 +126,7 @@ services:
   review-service:
     image: butbzdorov/astro-shopbackend-review-service:latest
     container_name: review-service
-    ports: ["8083:8083"]
+    ports: ["18083:8083"]
     environment:
       SPRING_DATASOURCE_URL: jdbc:postgresql://review_service_db:5432/review_service_db
       SPRING_DATASOURCE_USERNAME: butbzdorov
@@ -141,17 +141,17 @@ services:
   media-service:
     image: butbzdorov/astro-shopbackend-media-service:latest
     container_name: media-service
-    ports: ["8085:8085"]
+    ports: ["18085:8085"]
     networks: [ microservices-net ]
     restart: unless-stopped
 
   gateway-service:
     container_name: gateway-service
     image: butbzdorov/astro-shopbackend-gateway-service:latest
-    ports: [ "8080:8080" ]
+    ports: [ "18080:8080" ]
     environment:
 
-      - BACKEND_URL=https://user-service:8082
+      - BACKEND_URL=http://user-service:8082
       - FRONTEND_URL=https://quickly-delta.vercel.app
 
 
