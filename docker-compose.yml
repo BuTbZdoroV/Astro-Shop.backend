@@ -153,8 +153,9 @@ services:
       - SPRING_CLOUD_GATEWAY_ROUTES[0]_ID=auth-redirect
       - SPRING_CLOUD_GATEWAY_ROUTES[0]_PREDICATES_0=Path=/login/oauth2/code/google
       - SPRING_CLOUD_GATEWAY_ROUTES[0]_URI=http://user-service:8082
-      - BACKEND_URL=http://user-service:8082
-      - FRONTEND_URL=https://quickly-delta.vercel.app
+      - SPRING_CLOUD_GATEWAY_FORWARDED_ENABLED=true
+      - SERVER_FORWARDHEADERS_STRATEGY=framework
+      - SPRING_CLOUD_GATEWAY_HTTPCLIENT_FORWARDED_ENABLED=true
 
 
     depends_on:
