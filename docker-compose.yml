@@ -142,14 +142,20 @@ services:
     image: butbzdorov/astro-shopbackend-media-service:latest
     container_name: media-service
     ports: ["8085:8085"]
-    environment:
-      SPRING_AUTOCONFIGURE_EXCLUDE: org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration,org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfiguration,org.springframework.boot.autoconfigure.jdbc.DataSourceTransactionManagerAutoConfiguration
     networks: [ microservices-net ]
     restart: unless-stopped
 
   gateway-service:
+    container_name: gateway-service
     image: butbzdorov/astro-shopbackend-gateway-service:latest
     ports: [ "8080:8080" ]
+    depends_on:
+      - user-service
+      - product-service
+      - chat-service
+      - review-service
+      - media-service
+    networks: [ microservices-net ]
 
 networks:
   microservices-net:
