@@ -1,4 +1,7 @@
 
+x-environment: &default-env
+  USER_SERVICE_REPLICAS: ${USER_SERVICE_REPLICAS:-dev}
+
 services:
   # --- Инфраструктура ---
  # zookeeper:
@@ -102,7 +105,8 @@ services:
       - redis
     networks: [microservices-net]
     restart: unless-stopped
-    profiles: ["prod"]
+    deploy:
+      replicas: ${USER_SERVICE_REPLICAS:-0}
 
   product-service:
     image: butbzdorov/astro-shopbackend-product-service:latest
@@ -120,7 +124,8 @@ services:
       - redis
     networks: [microservices-net]
     restart: unless-stopped
-    profiles: ["prod"]
+    deploy:
+      replicas: ${USER_SERVICE_REPLICAS:-0}
 
   chat-service:
     image: butbzdorov/astro-shopbackend-chat-service:latest
@@ -136,7 +141,8 @@ services:
       - redis
     networks: [ microservices-net ]
     restart: unless-stopped
-    profiles: ["prod"]
+    deploy:
+      replicas: ${USER_SERVICE_REPLICAS:-0}
 
   review-service:
     image: butbzdorov/astro-shopbackend-review-service:latest
@@ -152,7 +158,8 @@ services:
       - review_service_db
     networks: [microservices-net]
     restart: unless-stopped
-    profiles: ["prod"]
+    deploy:
+      replicas: ${USER_SERVICE_REPLICAS:-0}
 
   media-service:
     image: butbzdorov/astro-shopbackend-media-service:latest
@@ -160,7 +167,8 @@ services:
     ports: ["18085:8085"]
     networks: [ microservices-net ]
     restart: unless-stopped
-    profiles: ["prod"]
+    deploy:
+      replicas: ${USER_SERVICE_REPLICAS:-0}
 
   gateway-service:
     container_name: gateway-service
@@ -174,7 +182,8 @@ services:
       - review-service
       - media-service
     networks: [ microservices-net ]
-    profiles: ["prod"]
+    deploy:
+      replicas: ${USER_SERVICE_REPLICAS:-0}
 
 networks:
   microservices-net:
