@@ -1,6 +1,6 @@
 
 x-environment: &default-env
-  USER_SERVICE_REPLICAS: ${USER_SERVICE_REPLICAS:-dev}
+  PROFILE: ${PROFILE:-dev}
 
 services:
   # --- Инфраструктура ---
