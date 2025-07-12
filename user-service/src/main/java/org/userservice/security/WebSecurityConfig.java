@@ -45,8 +45,10 @@ public class WebSecurityConfig {
                             String jwt = jwtUtils.generateToken(userPrincipal);
                             response.setHeader("Authorization", "Bearer " + jwt);
 
-                            response.sendRedirect(frontendUrl + "/oauth-callback/?token=" + URLEncoder.encode(jwt, StandardCharsets.UTF_8));
-                        }))
+                            String safeFrontendUrl = frontendUrl.endsWith("/")
+                                    ? frontendUrl : frontendUrl + "/";
+                            response.sendRedirect(safeFrontendUrl + "oauth-callback#token=" +
+                                    URLEncoder.encode(jwt, StandardCharsets.UTF_8));                        }))
                 .logout(logout -> logout
                         .logoutUrl("/oauth2/logout")
                         .logoutSuccessUrl("/")
