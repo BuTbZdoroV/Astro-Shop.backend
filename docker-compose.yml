@@ -40,6 +40,8 @@ services:
       MONGO_INITDB_ROOT_PASSWORD: 102938asd
       MONGO_INITDB_DATABASE: chat_service_db
     networks: [ microservices-net ]
+    command:
+      [ "--logpath=/dev/null"  ]
     restart: unless-stopped
 
   user_service_db:
@@ -90,6 +92,7 @@ services:
     container_name: user-service
     ports: ["18082:8082"]
     environment:
+      SPRING_PROFILES_ACTIVE: ${PROFILE:-dev}
       SPRING_DATASOURCE_URL: jdbc:postgresql://user_service_db:5432/user_service_db
       SPRING_DATASOURCE_USERNAME: butbzdorov
       SPRING_DATASOURCE_PASSWORD: 102938asd
@@ -105,14 +108,13 @@ services:
       - redis
     networks: [microservices-net]
     restart: unless-stopped
-    deploy:
-      replicas: ${USER_SERVICE_REPLICAS:-0}
 
   product-service:
     image: butbzdorov/astro-shopbackend-product-service:latest
     container_name: product-service
     ports: ["18081:8081"]
     environment:
+      SPRING_PROFILES_ACTIVE: ${PROFILE:-dev}
       SPRING_DATASOURCE_URL: jdbc:postgresql://product_service_db:5432/product_service_db
       SPRING_DATASOURCE_USERNAME: butbzdorov
       SPRING_DATASOURCE_PASSWORD: 102938asd
@@ -124,14 +126,14 @@ services:
       - redis
     networks: [microservices-net]
     restart: unless-stopped
-    deploy:
-      replicas: ${USER_SERVICE_REPLICAS:-0}
+
 
   chat-service:
     image: butbzdorov/astro-shopbackend-chat-service:latest
     container_name: chat-service
     ports: [ "18086:8086" ]
     environment:
+      SPRING_PROFILES_ACTIVE: ${PROFILE:-dev}
       SPRING_DATA_MONGODB_URI: mongodb://butbzdorov:102938asd@chat_service_db:27017/chat_service_db?authSource=admin
       SPRING_DATA_REDIS_HOST: redis
       WEB_SERVICE_URL: http://gateway-service:8080
@@ -141,14 +143,14 @@ services:
       - redis
     networks: [ microservices-net ]
     restart: unless-stopped
-    deploy:
-      replicas: ${USER_SERVICE_REPLICAS:-0}
+
 
   review-service:
     image: butbzdorov/astro-shopbackend-review-service:latest
     container_name: review-service
     ports: ["18083:8083"]
     environment:
+      SPRING_PROFILES_ACTIVE: ${PROFILE:-dev}
       SPRING_DATASOURCE_URL: jdbc:postgresql://review_service_db:5432/review_service_db
       SPRING_DATASOURCE_USERNAME: butbzdorov
       SPRING_DATASOURCE_PASSWORD: 102938asd
@@ -158,23 +160,24 @@ services:
       - review_service_db
     networks: [microservices-net]
     restart: unless-stopped
-    deploy:
-      replicas: ${USER_SERVICE_REPLICAS:-0}
+
 
   media-service:
     image: butbzdorov/astro-shopbackend-media-service:latest
     container_name: media-service
     ports: ["18085:8085"]
+    environment:
+      SPRING_PROFILES_ACTIVE: ${PROFILE:-dev}
     networks: [ microservices-net ]
     restart: unless-stopped
-    deploy:
-      replicas: ${USER_SERVICE_REPLICAS:-0}
+
 
   gateway-service:
     container_name: gateway-service
     image: butbzdorov/astro-shopbackend-gateway-service:latest
     ports: [ "18080:8080" ]
-
+    environment:
+      SPRING_PROFILES_ACTIVE: ${PROFILE:-dev}
     depends_on:
       - user-service
       - product-service
@@ -182,8 +185,6 @@ services:
       - review-service
       - media-service
     networks: [ microservices-net ]
-    deploy:
-      replicas: ${USER_SERVICE_REPLICAS:-0}
 
 networks:
   microservices-net:
