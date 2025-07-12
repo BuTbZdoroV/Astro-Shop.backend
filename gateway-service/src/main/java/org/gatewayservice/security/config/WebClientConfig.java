@@ -14,10 +14,9 @@ public class WebClientConfig {
     public String backendURL;
 
     @Bean
-    public WebClient authServiceWebClient() {
+    public WebClient authServiceClient() {
         return WebClient.builder()
                 .baseUrl(backendURL)
-                .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
                 .build();
     }
 }
